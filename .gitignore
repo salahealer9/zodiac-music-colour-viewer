@@ -1,0 +1,18 @@
+# Optional hygiene for the public, standalone-HTML repository
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Editor/backup files
+*~
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Accidental local runtime/environment files
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*

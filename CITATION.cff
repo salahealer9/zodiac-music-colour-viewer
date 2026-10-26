@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software in research, please cite this release."
+type: software
+title: "Zodiac–Music–Colour Interactive Wheel"
+authors:
+  - family-names: "Gherbi"
+    given-names: "Salah-Eddin"
+version: "0.3.4 A07"
+date-released: "2026-10-26"
+repository-code: "https://github.com/salahealer9/zodiac-music-colour-viewer"
+url: "https://salahealer9.github.io/zodiac-music-colour-viewer/"
+abstract: >-
+  A standalone interactive computational-geometry and music visualisation of
+  12 zodiacal signs, 36 decans and 360 angular degrees, with musical notes,
+  elemental triad chords, planetary-face annotations, and two design-based
+  colour representations. It offers an author-defined unequal-interval
+  432 Hz convention and conventional 440 Hz equal temperament. The model does
+  not establish physical resonances or intrinsic planetary or zodiacal
+  frequencies.
+keywords:
+  - research software
+  - zodiacal coordinate geometry
+  - computational geometry
+  - interactive visualisation
+  - music theory
+  - Web Audio
+  - colour theory
