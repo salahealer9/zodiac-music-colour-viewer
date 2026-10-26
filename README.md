@@ -2,7 +2,7 @@
 
 Explore an interactive zodiacal coordinate wheel connecting **12 signs**, **36 decans**, **360 degrees**, pitch classes, elemental musical triads, planetary-face annotations and two selectable colour-design conventions. You can play individual tones and simultaneous three-note chords.
 
-The viewer is a **standalone, self-contained HTML application**. Open `index.html` in a browser, or serve it from GitHub Pages. Sound starts only after you enable it. No third-party scripts, fonts, trackers or network APIs are required by the application.
+The viewer is a **standalone, self-contained HTML application**. [Explore the live interactive wheel](https://salahealer9.github.io/zodiac-music-colour-viewer/), or open `index.html` locally in a browser. Sound starts only after you enable it. No third-party scripts, fonts, trackers or network APIs are required by the application.
 
 ## How to use it
 
@@ -20,8 +20,8 @@ The visible **OKLCH** rendering is the default design. The selectable legacy **H
 
 ## Reproducibility and version identity
 
-- Release: **v0.3.4 A07**, public-facing wrapper derivative dated **26 October 2026**.
-- Source baseline: **author-GPG-signed, scoped P4-T1 v0.3.4 A07 certification closeout** dated 25 October 2026.
+- Published viewer version: **v0.3.4 A07**, deployed to GitHub Pages on **26 October 2026**. This is a separately identified public-facing wrapper derivative; a versioned GitHub Release and Zenodo DOI, if issued, are recorded separately from this live deployment.
+- Source baseline: **author-GPG-signed, scoped P4-T1 v0.3.4 A07 certification closeout** dated 25 October 2026. Initial public deployment source: GPG-signed commit [`838eb5f2aa3e1d98d1f953d0d22b5c04095126d3`](https://github.com/salahealer9/zodiac-music-colour-viewer/commit/838eb5f2aa3e1d98d1f953d0d22b5c04095126d3).
 - Frozen A07 original SHA-256: `24fb93969652f32f34ddb534d6b2dbd07b263dbef9e948ff6e22d10a245896e9`.
 - Certified scientific-data JSON SHA-256 (unchanged within `index.html`): `bb7237171dd1a89340b25b899a4fdcc10d376b38533c58c31c8fa4ba84947594`.
 - `index.html` differs from the frozen original in **two user-visible strings only**: the browser title and review-status pill; the entire CSS, JavaScript and embedded scientific JSON are byte-identical. The exact public-release diff and release verification procedure are provided in the separately retained release-custody package.
@@ -31,6 +31,6 @@ This repository contains **only the public application and public documentation*
 
 ## Rights and acknowledgements
 
-Copyright © 2026 Salah-Eddin Gherbi for original software and arrangement, subject to any third-party rights. **No open-source software licence is granted or implied by this public release candidate.** Public access to the running website does not itself grant permission to redistribute or adapt its code. Any future licence choice will require the author's express approval. No exclusive rights are claimed over zodiac signs, musical concepts or historical facts.
+Copyright © 2026 Salah-Eddin Gherbi for original software and arrangement, subject to any third-party rights. **All rights reserved; see [LICENSE](LICENSE).** Publication of this repository and website does not grant an open-source licence or permission to redistribute or adapt the code. Citation metadata are provided in [CITATION.cff](CITATION.cff); version-specific DOI information should be obtained from the corresponding archival record when available. Any future licence change requires the author's express approval. No exclusive rights are claimed over zodiac signs, musical concepts or historical facts.
 
 Historical concepts and terminology are presented for mathematical investigation and educational exploration. Original third-party diagrams or scanned images are not included.
