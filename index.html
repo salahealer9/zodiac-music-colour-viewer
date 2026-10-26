@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="zmc-data-sha256" content="bb7237171dd1a89340b25b899a4fdcc10d376b38533c58c31c8fa4ba84947594">
+<title>Zodiac · Music · Colour — Interactive Zodiac Wheel</title>
+<meta name="zmc-review-build" content="P4-T1-A07-elemental-note-vertex-alignment">
+<style>
+:root{color-scheme:dark;--bg:#090f1c;--line:#2b3c50;--text:#edf2f5;--muted:#a1b1bf;--gold:#e4c58b;--gold2:#fff1cb;--accent:#94def6;--warn:#ffbcc4;--field:#091627;--fieldline:#33475d}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 50% 5%,#1d3044 0%,#090f1c 51%,#070c17 100%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;line-height:1.5;min-height:100vh}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(#d9e9ee 0.55px,transparent 0.55px);background-size:42px 42px;opacity:.08}
+button,select,input{font:inherit}button,select{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.wrap{max-width:1390px;margin:auto;padding:22px clamp(16px,3vw,46px) 52px;position:relative}
+.topline{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:8px 0 20px;border-bottom:1px solid #35475a}
+.logo{display:flex;align-items:center;gap:14px}.mark{width:43px;height:43px;border-radius:50%;border:1px solid #d7b882;display:grid;place-items:center;color:var(--gold);font-family:Georgia,serif;font-size:24px;background:#1c2939;flex:none}
+.kicker{text-transform:uppercase;letter-spacing:.24em;font-size:10px;font-weight:800;color:var(--gold)}.brand{font-family:Georgia,"Times New Roman",serif;font-size:23px;letter-spacing:.045em;line-height:1.12;color:var(--gold2)}.subbrand{font-size:11px;letter-spacing:.09em;color:var(--muted);margin-top:5px}
+.state{font-size:11px;color:#d9ceaa;border:1px solid #685b45;background:#786a3b22;padding:7px 11px;border-radius:99px;letter-spacing:.035em;text-align:center}
+.banner{display:none;margin-top:14px;padding:12px 15px;border:1px solid #8a4b57;background:#3a1c26;color:var(--warn);border-radius:10px;font-size:13px}.banner.show{display:block}
+.intro{padding:22px 0 14px}.intro h1{font-family:Georgia,serif;font-size:clamp(26px,2.8vw,38px);font-weight:400;line-height:1.17;margin:0;color:#f4ead9}.intro p{max-width:860px;color:var(--muted);font-size:14px;margin:8px 0 0}
+.layout{display:grid;grid-template-columns:minmax(340px,1.32fr) minmax(320px,.88fr);grid-template-areas:"wheel record" "wheel display" "wheel prov" "wheel foot";gap:22px 24px;align-items:start}
+.wheelbox{grid-area:wheel}.record{grid-area:record}.prov{grid-area:prov}.display{grid-area:display}.foot{grid-area:foot}
+/* desktop: the atlas stays put while the right column scrolls; its lower controls scroll inside the card */
+@media(min-width:981px) and (min-height:640px){.wheelbox{position:sticky;top:14px}.wheelbox .wheelSvg{max-width:var(--a06-wheel-maximum,min(640px,calc(100vh - 372px)))}}
+.surface{background:linear-gradient(140deg,#162437df,#0e1a2bdc);border:1px solid #39485b;border-radius:22px;box-shadow:0 28px 76px #0005}
+.wheelbox{padding:18px 16px 20px}
+.eyebrow,.label{text-transform:uppercase;font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.18em}
+.wheelhead{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 10px;flex-wrap:wrap}.wheelhead strong{color:#f1e5c9;letter-spacing:.06em;font-size:13px;font-weight:600;display:block}
+.headright{display:flex;align-items:center;gap:12px}.modetag{font-size:11px;color:var(--muted);text-align:right}
+.soundtoggle{display:inline-flex;align-items:center;gap:8px;border-radius:99px;padding:7px 14px 7px 11px;border:1px solid #4a5f71;background:#14273c;color:#dce8ed;font-size:12px;font-weight:700}
+.soundtoggle svg{width:18px;height:18px}.soundtoggle .on{display:none}.soundtoggle[aria-pressed=true]{background:#e4c88f;color:#0e1a28;border-color:#e4c88f}.soundtoggle[aria-pressed=true] .on{display:inline}.soundtoggle[aria-pressed=true] .off{display:none}
+.wheelSvg{display:block;width:100%;max-width:640px;margin:4px auto 0;touch-action:manipulation;overflow:visible;border-radius:50%}
+/* Suppress UA, default, and custom rings on this SVG in ChromeOS Chrome and Chromium. */
+.wheelSvg:focus,.wheelSvg:focus-visible{outline:none!important;outline-offset:0!important;box-shadow:none!important}
+/* Keep a small, non-overlapping focus cue for keyboard navigation. */
+.wheelbox:has(.wheelSvg:focus-visible) .wheelhead strong{text-decoration:underline 2px var(--accent);text-underline-offset:4px}
+.wheelSvg .pulse{animation:pulse .55s ease-out}
+@keyframes pulse{0%{stroke-width:9;stroke-opacity:1}100%{stroke-width:3.5;stroke-opacity:.95}}
+.orient{font-size:11px;color:#9fb3c2;text-align:center;margin:2px 10px 8px}
+.dock{margin:10px 10px 0;padding:12px 14px;border:1px solid var(--fieldline);border-radius:14px;background:#0a1626}
+.dockhead{display:flex;justify-content:space-between;align-items:baseline;gap:4px 10px;margin-bottom:9px;flex-wrap:wrap}
+.dockrow{display:flex;flex-wrap:wrap;gap:9px 14px;align-items:center}
+.grp{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
+.miniseg{display:inline-flex;background:#0a1424;border:1px solid #314155;border-radius:9px;padding:3px;gap:2px}.miniseg button{border:0;background:none;color:#aab9c7;font-size:11.5px;padding:6px 10px;border-radius:7px;font-weight:650}.miniseg button[aria-pressed=true]{background:#35465b;color:#fff0d1;box-shadow:inset 0 0 0 1px #67768a}
+.action{background:#e4c88f;color:#0e1a28;font-size:12px;font-weight:750;border:0;border-radius:9px;padding:8px 13px}.action.secondary{background:#20364b;border:1px solid #4c6172;color:#e0ebee}.action.stop{background:#1a2433;border:1px solid #5f4350;color:var(--warn)}.action:disabled{opacity:.42;cursor:not-allowed}
+.check{display:flex;gap:7px;align-items:center;font-size:12px;color:#c2d2d9}.check input{accent-color:#d5c090;width:15px;height:15px}
+.statusline{color:#a9c3cf;min-height:18px;font-size:12px;margin-top:9px;font-variant-numeric:tabular-nums}
+.soundbar[data-on=false] .needs-sound{opacity:.45}
+.readout{margin:10px 10px 0;padding:9px 12px;border:1px solid var(--fieldline);border-radius:12px;background:#0a1626;font-size:12.5px;color:#d4e1e8;font-variant-numeric:tabular-nums}.readout b{color:var(--gold2);font-weight:650}
+.lonrow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;margin:12px 10px 0}.lonrow input[type=range]{width:100%;accent-color:var(--gold)}
+.entry{display:flex;gap:6px;align-items:center}.entry input,.tf{width:104px;padding:7px 9px;background:var(--field);color:#e7f1f6;border:1px solid var(--fieldline);border-radius:8px;font-variant-numeric:tabular-nums}
+.tf{width:76px}input[aria-invalid=true]{border-color:#c46b7a}
+select.tf{width:auto}
+.hint{font-size:10.5px;color:#8ea3b3;margin:4px 10px 0;min-height:15px}.hint.err{color:var(--warn)}
+.overlays{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 10px 0}
+.colourexpl{font-size:11px;color:#b5c4cd;margin-top:9px}.colourexpl strong{color:#f6e1b8}
+.pane{padding:22px 23px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;margin-top:14px}.field{display:flex;flex-direction:column;gap:6px;font-size:11px;letter-spacing:.04em;color:var(--muted)}.field select,.field input{width:100%;padding:9px 10px;background:var(--field);color:#e7f1f6;border:1px solid var(--fieldline);border-radius:9px;font-variant-numeric:tabular-nums}.field small{font-size:10px;color:#8196a6;letter-spacing:0}
+.segwide{display:flex;margin-top:12px}.segwide button{flex:1;padding:9px 6px}.display .overlays{margin:10px 0 0}.display .colourexpl{margin-top:12px}
+.lonblock{margin:12px 10px 0}.lonblock .lonrow{margin:0}.lonblock .readout{margin:6px 0 0;padding:0;border:0;background:none;font-size:12px}.lonblock .hint{margin:4px 0 0}.hint:empty{display:none}
+.navhead{display:flex;align-items:center;justify-content:space-between;gap:15px}.arrows{display:flex;gap:7px}.smallbtn{background:#14273c;border:1px solid #4a5f71;color:#ebf3f7;border-radius:10px;width:38px;height:36px;font-size:19px}
+.recordtop{display:flex;align-items:flex-start;gap:13px;margin-top:12px}.iconlarge{width:68px;height:68px;flex:none;display:grid;place-items:center;background:#b79d6222;color:var(--gold2);font-size:44px;font-family:"DejaVu Sans","Noto Sans Symbols 2","Segoe UI Symbol",serif;border:1px solid #ab8b5680;border-radius:16px}
+.recordname{font-family:Georgia,serif;font-size:30px;color:#fff0ce;line-height:1.1;margin:3px 0 4px}.recordmeta{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.tabs{display:flex;gap:8px;margin:16px 0 14px}.tabs button{flex:1;background:#0c192a;border:1px solid #2f4357;color:#dce8ed;border-radius:9px;padding:9px 6px;font-size:12px}.tabs button[aria-pressed=true]{background:#3b5366;color:#fff3d9;border-color:#a68c5e}
+.recordgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.mini{border:1px solid #334759;border-radius:12px;background:#0a1727;padding:11px 13px;min-height:70px}.mini .label{font-size:9px;letter-spacing:.09em}.mini strong{display:block;font-size:20px;font-weight:400;margin-top:4px;font-family:Georgia,serif;color:#f3e5ca}.wide{grid-column:1/-1}
+.helper{font-size:11px;color:#a4b6c2;margin-top:5px}.qual{font-size:10.5px;color:#d9c79f;margin-top:5px;font-style:italic}
+.hrows{display:grid;grid-template-columns:auto 1fr auto auto;gap:7px 10px;align-items:center;margin-top:8px;font-size:12px}.hrows .sw{width:20px;height:20px;border-radius:6px;border:2px solid #f0f1eb88}.hrows .k{color:#b8c8d2}.hrows .v{color:#eef7f8;font-weight:650;font-variant-numeric:tabular-nums;text-align:right}.hrows .x{color:#7f95a6;font-size:10.5px;font-family:ui-monospace,Menlo,Consolas,monospace}.hrows .k.drives{color:var(--gold2);font-weight:650}
+.sep{height:1px;background:#33495d;margin:16px 0}.chord{color:#f0e6d4;font-size:16px;font-weight:650;margin:6px 0 2px}.chordnotes{color:#a9cbd2;font-size:12.5px}
+.dstrip{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:11px}.dcard{background:#0b192a;color:#e3ebf0;border:1px solid #2c4358;border-radius:11px;text-align:left;padding:9px 8px 9px 12px;min-width:0;position:relative;overflow:hidden}.dcard[aria-pressed=true]{border-color:var(--gold);box-shadow:inset 0 0 0 1px #cbaa7d}.dcard:before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--color)}.dcard small{display:block;color:#acb9c5;font-size:10px}.dcard strong{font-size:15px}.dcard em{display:block;font-size:10px;font-style:normal;color:#b5c6ce;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prov .provgrid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:10px}
+.prov dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:11.5px;margin:0}.prov dt{color:var(--muted)}.prov dd{margin:0;color:#dfe9ee;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;word-break:break-all}
+.prov ul{margin:3px 0 0;padding-left:18px;font-size:11px;color:#bfccd3}.prov h3{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:10px 0 0}.prov h3:first-child{margin-top:0}
+.prov .exportrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.ok{color:#9fe3b0}.bad{color:var(--warn)}
+.foot{border-top:1px solid #2b3c50;margin-top:6px;padding-top:16px;display:flex;gap:20px;justify-content:space-between;flex-wrap:wrap;font-size:11px;color:#91a7b7}
+@media(min-width:981px) and (max-width:1279px) and (min-height:640px){.wheelbox{position:static}}
+@media(max-width:980px){.layout{grid-template-columns:1fr;grid-template-areas:"wheel" "record" "display" "prov" "foot"}.wheelSvg{max-width:600px}}
+@media(max-width:570px){.wrap{padding:12px 12px 35px}.topline{flex-wrap:wrap}.intro h1{font-size:25px}.pane{padding:18px}.wheelbox{padding:12px 6px 16px}.recordname{font-size:26px}.recordgrid{gap:7px}.lonrow{grid-template-columns:1fr;gap:6px}.hrows{grid-template-columns:auto 1fr auto}.hrows .x{display:none}.dock{padding:11px 10px}.modetag{display:none}.dockhead{flex-direction:column;align-items:flex-start}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* A06 — layout only: tighter whitespace without shrinking label text or hiding controls. */
+@media (min-width:981px) {
+  .wheelbox { padding:13px 12px 13px; }
+  .wheelbox .wheelhead { padding:0 6px; }
+  .wheelbox .wheelSvg { margin-top:1px; }
+  .wheelbox .orient { margin:1px 6px 4px; }
+  .wheelbox .dock { margin:6px 6px 0; padding:9px 10px; }
+  .wheelbox .dockhead { margin-bottom:6px; }
+  .wheelbox .dockrow { gap:7px 10px; }
+  .wheelbox .statusline { margin-top:6px; }
+  .wheelbox .lonblock { margin:7px 6px 0; }
+  .wheelbox .lonblock .lonrow { gap:8px; }
+  .wheelbox .lonblock .readout { margin-top:4px; }
+  .wheelbox .lonblock .hint { margin-top:2px; }
+  .wheelbox.a06-page-flow { position:static!important; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="topline">
+  <div class="logo"><div class="mark" aria-hidden="true">✧</div><div><div class="kicker">Computational geometry · research viewer</div><div class="brand">Zodiac / Music / Colour</div><div class="subbrand">An interactive atlas of twelve signs and thirty-six decans</div></div></div>
+  <div class="state" id="statePill">v0.3.4 A07 · signed audit closeout</div>
+</header>
+<div class="banner" id="integrityBanner" role="alert"></div>
+<section class="intro"><h1>A circle of signs, notes and colours.</h1><p>Certified zodiac-to-note mapping, elemental triads, traditional planetary faces and two independently defined colour wheels. Turn sound on and move across the wheel to hear each decan; play the chord to see the elemental triangle sound.</p></section>
+
+<main class="layout">
+  <section class="surface wheelbox" aria-labelledby="wheelTitle">
+    <div class="wheelhead">
+      <div><div class="eyebrow">Interactive atlas</div><strong id="wheelTitle">THE THIRTY-SIX DECANS</strong></div>
+      <div class="headright"><div class="modetag" id="wheelModeLabel">PITCH-CLASS HUE</div>
+        <button type="button" class="soundtoggle" id="soundToggle" aria-pressed="false" aria-describedby="soundStatus">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"/><g class="on"><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></g><g class="off"><path d="m16 9 5 6M21 9l-5 6"/></g></svg>
+          <span id="soundToggleText">Sound off</span></button>
+      </div>
+    </div>
+    <svg id="wheel" class="wheelSvg" viewBox="-22 -22 704 704" role="slider" tabindex="0" aria-roledescription="zodiac wheel" aria-label="Zodiac wheel of 36 decans. Arrow keys move one decan, Page Up and Page Down move one sign, Home and End jump to the first and last decan." aria-valuemin="0" aria-valuemax="35" aria-valuenow="0"></svg>
+    <p class="orient" id="orientation">Display orientation: 0° (start of Aries) at top, longitude increasing <b>clockwise</b>. A chosen layout, not a projection of the sky.</p>
+
+    <div class="dock soundbar" id="soundbar" data-on="false" role="group" aria-labelledby="soundLabel">
+      <div class="dockhead"><span class="label" id="soundLabel">Sound · illustration only</span><span class="label" style="letter-spacing:.06em;text-transform:none;font-weight:500" title="432 Hz: author-defined circle tuning (fixed unequal intervals); 440 Hz: conventional twelve-tone equal temperament. Sound illustration only; no celestial-frequency claim. Esc stops playback.">432: circle · 440: 12-TET · Esc stops</span></div>
+      <div class="dockrow">
+        <label class="check needs-sound"><input type="checkbox" id="hoverSound" checked> Hover to hear</label>
+        <div class="grp"><span id="a4Label">Tune</span><div class="miniseg" role="group" aria-labelledby="a4Label" id="a4Seg"><button type="button" data-v="432" aria-label="432 Hz — author-defined circle tuning, fixed frequency table" aria-pressed="true">432 Hz</button><button type="button" data-v="440" aria-label="440 Hz — conventional 12-tone equal temperament (12-TET)" aria-pressed="false">440 Hz</button></div></div>
+        <div class="grp"><span id="octLabel">Octave</span><div class="miniseg" role="group" aria-labelledby="octLabel" id="octSeg"><button type="button" data-v="3" aria-pressed="false">3</button><button type="button" data-v="4" aria-pressed="true">4</button><button type="button" data-v="5" aria-pressed="false">5</button></div></div>
+        <div class="grp"><button class="action needs-sound" id="playNote" type="button">♪ Note</button><button class="action secondary needs-sound" id="playChord" type="button">♫ Chord</button><button class="action stop" id="stopAudio" type="button">Stop</button></div>
+      </div>
+      <div class="statusline" id="soundStatus">Sound is off. Switch it on, then hover, tap or use the arrow keys to hear each decan.</div>
+    </div>
+
+    <div class="lonblock">
+      <div class="lonrow">
+        <label class="eyebrow" for="degree">Longitude</label>
+        <input id="degree" type="range" min="0" max="359" step="1" value="5">
+        <div class="entry"><label class="sr" for="thetaEntry">Exact longitude θ in degrees: integer, decimal or fraction</label><input id="thetaEntry" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="5" title="θ accepts integers, decimals or fractions (e.g. −10, 9.999, 999/1000); wrapped into [0°, 360°)" aria-describedby="thetaHint"><span aria-hidden="true">°</span></div>
+      </div>
+      <div class="readout" id="readout" aria-hidden="true"></div>
+      <div class="hint" id="thetaHint"></div>
+    </div>
+  </section>
+
+  <section class="surface pane record" aria-labelledby="selectedHeading">
+    <div class="navhead"><h2 class="label" id="selectedHeading" style="margin:0">Selected decan</h2><div class="arrows"><button class="smallbtn" id="prev" type="button" aria-label="Previous decan">‹</button><button class="smallbtn" id="next" type="button" aria-label="Next decan">›</button></div></div>
+    <div class="recordtop"><div class="iconlarge" id="signGlyph" aria-hidden="true"></div><div><div class="recordname" id="signName"></div><div class="recordmeta" id="signMetadata"></div><div class="recordmeta" id="signPitch"></div></div></div>
+    <div class="tabs" id="decanTabs" role="group" aria-label="Decan within this sign"></div>
+    <div class="recordgrid">
+      <div class="mini"><div class="label">Triplicity note · P2A</div><strong id="decNote"></strong><div class="helper" id="triplicityRuler"></div></div>
+      <div class="mini"><div class="label">Planetary face · P2B</div><strong id="planetName"></strong><div class="helper" id="planetSource"></div></div>
+      <div class="mini"><div class="label">Fludd · 1617 · P3A</div><strong id="fluddNote"></strong><div class="helper" id="fluddRegister"></div><div class="qual" id="fluddQual"></div></div>
+      <div class="mini"><div class="label">Gaffurio · 1496 · P3A</div><strong id="modeName"></strong><div class="helper" id="modeEngraved"></div><div class="helper">A mode, not a single pitch.</div></div>
+      <div class="mini wide"><div class="label">Hue values · P3B formulas</div><div class="hrows" id="hueRows"></div><div class="helper" id="hueNote"></div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="label">Elemental chord &amp; opposition</div>
+    <div id="chordText" class="chord"></div><div class="chordnotes" id="chordNotes"></div><div class="helper" id="chordShare"></div><div class="helper" id="opposition"></div>
+    <div class="sep"></div>
+    <div class="label">This sign's three decans</div>
+    <div class="dstrip" id="decanStrip"></div>
+  </section>
+
+  <section class="surface pane display" aria-labelledby="paletteHeading">
+    <h2 class="label" id="paletteHeading" style="margin:0">Colour &amp; display</h2>
+    <div class="miniseg segwide" role="group" aria-label="Colour ring"><button id="modePitch" type="button" aria-pressed="true">Musical notes</button><button id="modeAngle" type="button" aria-pressed="false">Zodiac angle</button><button id="modeBoth" type="button" aria-pressed="false">Both rings</button></div>
+    <div class="controls">
+      <label class="field" for="beta">β · pitch-hue offset (°)<input id="beta" type="text" inputmode="decimal" value="0" autocomplete="off"><small>H<sub>pitch</sub> = (30p + β) mod 360</small></label>
+      <label class="field" for="alpha">α · angle-hue offset (°)<input id="alpha" type="text" inputmode="decimal" value="0" autocomplete="off"><small>H<sub>angle</sub> = (θ + α) mod 360</small></label>
+      <label class="field" for="labels">Ring labels<select id="labels"><option value="notes">Musical notes</option><option value="planets">Planetary faces</option><option value="numbers">Decan numbers</option><option value="none">None</option></select></label>
+      <label class="field" for="render">Rendering (P4 display choice)<select id="render"><option value="oklch">OKLCH · even lightness</option><option value="hsl">HSL · legacy (non-conforming comparison)</option></select></label>
+    </div>
+    <div class="helper" id="hslContrastQualification">Legacy HSL is a non-conforming comparison: some wheel labels fall below the 4.5:1 normal-text contrast threshold. Select OKLCH for contrast-conforming wheel labels.</div>
+    <div class="hint" id="offsetHint" style="margin:6px 0 0"></div>
+    <div class="colourexpl" id="modeExplanation"></div>
+    <div class="sep"></div>
+    <div class="label">Wheel overlays</div>
+    <div class="overlays" role="group" aria-label="Wheel overlays">
+      <label class="check"><input type="checkbox" id="ovSame" checked> Same note</label>
+      <label class="check"><input type="checkbox" id="ovTri" checked> Elemental triangle</label>
+      <label class="check"><input type="checkbox" id="ovOpp" checked> Opposite sign</label>
+      <label class="check"><input type="checkbox" id="ovTicks" checked> 360° ticks</label>
+    </div>
+  </section>
+
+  <section class="surface pane prov" aria-labelledby="provHeading">
+    <h2 class="label" id="provHeading" style="margin:0">Provenance &amp; export</h2>
+    <div class="provgrid">
+      <dl id="provList"></dl>
+      <div>
+        <h3>Derived in build (not read verbatim)</h3><ul id="provDerived"></ul>
+        <h3>Display labels entered in builder</h3><ul id="provLabels"></ul>
+        <h3>P4 display choices</h3><ul id="provChoices"></ul>
+      </div>
+    </div>
+    <div class="exportrow"><button class="action secondary" id="copyLink" type="button">Copy state link</button><button class="action secondary" id="copyState" type="button">Copy state JSON</button><button class="action secondary" id="downloadSvg" type="button">Download wheel SVG</button></div>
+    <div class="statusline" id="exportStatus" role="status" aria-live="polite"></div>
+  </section>
+<footer class="foot"><div><strong>Scientific lineage:</strong> P1A–P3B signed findings · P3B HEAD <code id="footHead"></code><br>Original note-sequence authorship remains unresolved; Renaissance correspondences are source-qualified.</div><div>Colour is a <strong>design convention</strong>, not light–sound or planetary physics.<br>Frontend, RGB rendering and synthesis are not scientifically certified.</div></footer>
+</main>
+<div class="sr" aria-live="polite" id="live"></div>
+</div>
+<script type="application/json" id="certified-data">{"cells":[{"angle_hue_deg_exact":"1/2","j":0,"k":0},{"angle_hue_deg_exact":"3/2","j":0,"k":1},{"angle_hue_deg_exact":"5/2","j":0,"k":2},{"angle_hue_deg_exact":"7/2","j":0,"k":3},{"angle_hue_deg_exact":"9/2","j":0,"k":4},{"angle_hue_deg_exact":"11/2","j":0,"k":5},{"angle_hue_deg_exact":"13/2","j":0,"k":6},{"angle_hue_deg_exact":"15/2","j":0,"k":7},{"angle_hue_deg_exact":"17/2","j":0,"k":8},{"angle_hue_deg_exact":"19/2","j":0,"k":9},{"angle_hue_deg_exact":"21/2","j":1,"k":10},{"angle_hue_deg_exact":"23/2","j":1,"k":11},{"angle_hue_deg_exact":"25/2","j":1,"k":12},{"angle_hue_deg_exact":"27/2","j":1,"k":13},{"angle_hue_deg_exact":"29/2","j":1,"k":14},{"angle_hue_deg_exact":"31/2","j":1,"k":15},{"angle_hue_deg_exact":"33/2","j":1,"k":16},{"angle_hue_deg_exact":"35/2","j":1,"k":17},{"angle_hue_deg_exact":"37/2","j":1,"k":18},{"angle_hue_deg_exact":"39/2","j":1,"k":19},{"angle_hue_deg_exact":"41/2","j":2,"k":20},{"angle_hue_deg_exact":"43/2","j":2,"k":21},{"angle_hue_deg_exact":"45/2","j":2,"k":22},{"angle_hue_deg_exact":"47/2","j":2,"k":23},{"angle_hue_deg_exact":"49/2","j":2,"k":24},{"angle_hue_deg_exact":"51/2","j":2,"k":25},{"angle_hue_deg_exact":"53/2","j":2,"k":26},{"angle_hue_deg_exact":"55/2","j":2,"k":27},{"angle_hue_deg_exact":"57/2","j":2,"k":28},{"angle_hue_deg_exact":"59/2","j":2,"k":29},{"angle_hue_deg_exact":"61/2","j":3,"k":30},{"angle_hue_deg_exact":"63/2","j":3,"k":31},{"angle_hue_deg_exact":"65/2","j":3,"k":32},{"angle_hue_deg_exact":"67/2","j":3,"k":33},{"angle_hue_deg_exact":"69/2","j":3,"k":34},{"angle_hue_deg_exact":"71/2","j":3,"k":35},{"angle_hue_deg_exact":"73/2","j":3,"k":36},{"angle_hue_deg_exact":"75/2","j":3,"k":37},{"angle_hue_deg_exact":"77/2","j":3,"k":38},{"angle_hue_deg_exact":"79/2","j":3,"k":39},{"angle_hue_deg_exact":"81/2","j":4,"k":40},{"angle_hue_deg_exact":"83/2","j":4,"k":41},{"angle_hue_deg_exact":"85/2","j":4,"k":42},{"angle_hue_deg_exact":"87/2","j":4,"k":43},{"angle_hue_deg_exact":"89/2","j":4,"k":44},{"angle_hue_deg_exact":"91/2","j":4,"k":45},{"angle_hue_deg_exact":"93/2","j":4,"k":46},{"angle_hue_deg_exact":"95/2","j":4,"k":47},{"angle_hue_deg_exact":"97/2","j":4,"k":48},{"angle_hue_deg_exact":"99/2","j":4,"k":49},{"angle_hue_deg_exact":"101/2","j":5,"k":50},{"angle_hue_deg_exact":"103/2","j":5,"k":51},{"angle_hue_deg_exact":"105/2","j":5,"k":52},{"angle_hue_deg_exact":"107/2","j":5,"k":53},{"angle_hue_deg_exact":"109/2","j":5,"k":54},{"angle_hue_deg_exact":"111/2","j":5,"k":55},{"angle_hue_deg_exact":"113/2","j":5,"k":56},{"angle_hue_deg_exact":"115/2","j":5,"k":57},{"angle_hue_deg_exact":"117/2","j":5,"k":58},{"angle_hue_deg_exact":"119/2","j":5,"k":59},{"angle_hue_deg_exact":"121/2","j":6,"k":60},{"angle_hue_deg_exact":"123/2","j":6,"k":61},{"angle_hue_deg_exact":"125/2","j":6,"k":62},{"angle_hue_deg_exact":"127/2","j":6,"k":63},{"angle_hue_deg_exact":"129/2","j":6,"k":64},{"angle_hue_deg_exact":"131/2","j":6,"k":65},{"angle_hue_deg_exact":"133/2","j":6,"k":66},{"angle_hue_deg_exact":"135/2","j":6,"k":67},{"angle_hue_deg_exact":"137/2","j":6,"k":68},{"angle_hue_deg_exact":"139/2","j":6,"k":69},{"angle_hue_deg_exact":"141/2","j":7,"k":70},{"angle_hue_deg_exact":"143/2","j":7,"k":71},{"angle_hue_deg_exact":"145/2","j":7,"k":72},{"angle_hue_deg_exact":"147/2","j":7,"k":73},{"angle_hue_deg_exact":"149/2","j":7,"k":74},{"angle_hue_deg_exact":"151/2","j":7,"k":75},{"angle_hue_deg_exact":"153/2","j":7,"k":76},{"angle_hue_deg_exact":"155/2","j":7,"k":77},{"angle_hue_deg_exact":"157/2","j":7,"k":78},{"angle_hue_deg_exact":"159/2","j":7,"k":79},{"angle_hue_deg_exact":"161/2","j":8,"k":80},{"angle_hue_deg_exact":"163/2","j":8,"k":81},{"angle_hue_deg_exact":"165/2","j":8,"k":82},{"angle_hue_deg_exact":"167/2","j":8,"k":83},{"angle_hue_deg_exact":"169/2","j":8,"k":84},{"angle_hue_deg_exact":"171/2","j":8,"k":85},{"angle_hue_deg_exact":"173/2","j":8,"k":86},{"angle_hue_deg_exact":"175/2","j":8,"k":87},{"angle_hue_deg_exact":"177/2","j":8,"k":88},{"angle_hue_deg_exact":"179/2","j":8,"k":89},{"angle_hue_deg_exact":"181/2","j":9,"k":90},{"angle_hue_deg_exact":"183/2","j":9,"k":91},{"angle_hue_deg_exact":"185/2","j":9,"k":92},{"angle_hue_deg_exact":"187/2","j":9,"k":93},{"angle_hue_deg_exact":"189/2","j":9,"k":94},{"angle_hue_deg_exact":"191/2","j":9,"k":95},{"angle_hue_deg_exact":"193/2","j":9,"k":96},{"angle_hue_deg_exact":"195/2","j":9,"k":97},{"angle_hue_deg_exact":"197/2","j":9,"k":98},{"angle_hue_deg_exact":"199/2","j":9,"k":99},{"angle_hue_deg_exact":"201/2","j":10,"k":100},{"angle_hue_deg_exact":"203/2","j":10,"k":101},{"angle_hue_deg_exact":"205/2","j":10,"k":102},{"angle_hue_deg_exact":"207/2","j":10,"k":103},{"angle_hue_deg_exact":"209/2","j":10,"k":104},{"angle_hue_deg_exact":"211/2","j":10,"k":105},{"angle_hue_deg_exact":"213/2","j":10,"k":106},{"angle_hue_deg_exact":"215/2","j":10,"k":107},{"angle_hue_deg_exact":"217/2","j":10,"k":108},{"angle_hue_deg_exact":"219/2","j":10,"k":109},{"angle_hue_deg_exact":"221/2","j":11,"k":110},{"angle_hue_deg_exact":"223/2","j":11,"k":111},{"angle_hue_deg_exact":"225/2","j":11,"k":112},{"angle_hue_deg_exact":"227/2","j":11,"k":113},{"angle_hue_deg_exact":"229/2","j":11,"k":114},{"angle_hue_deg_exact":"231/2","j":11,"k":115},{"angle_hue_deg_exact":"233/2","j":11,"k":116},{"angle_hue_deg_exact":"235/2","j":11,"k":117},{"angle_hue_deg_exact":"237/2","j":11,"k":118},{"angle_hue_deg_exact":"239/2","j":11,"k":119},{"angle_hue_deg_exact":"241/2","j":12,"k":120},{"angle_hue_deg_exact":"243/2","j":12,"k":121},{"angle_hue_deg_exact":"245/2","j":12,"k":122},{"angle_hue_deg_exact":"247/2","j":12,"k":123},{"angle_hue_deg_exact":"249/2","j":12,"k":124},{"angle_hue_deg_exact":"251/2","j":12,"k":125},{"angle_hue_deg_exact":"253/2","j":12,"k":126},{"angle_hue_deg_exact":"255/2","j":12,"k":127},{"angle_hue_deg_exact":"257/2","j":12,"k":128},{"angle_hue_deg_exact":"259/2","j":12,"k":129},{"angle_hue_deg_exact":"261/2","j":13,"k":130},{"angle_hue_deg_exact":"263/2","j":13,"k":131},{"angle_hue_deg_exact":"265/2","j":13,"k":132},{"angle_hue_deg_exact":"267/2","j":13,"k":133},{"angle_hue_deg_exact":"269/2","j":13,"k":134},{"angle_hue_deg_exact":"271/2","j":13,"k":135},{"angle_hue_deg_exact":"273/2","j":13,"k":136},{"angle_hue_deg_exact":"275/2","j":13,"k":137},{"angle_hue_deg_exact":"277/2","j":13,"k":138},{"angle_hue_deg_exact":"279/2","j":13,"k":139},{"angle_hue_deg_exact":"281/2","j":14,"k":140},{"angle_hue_deg_exact":"283/2","j":14,"k":141},{"angle_hue_deg_exact":"285/2","j":14,"k":142},{"angle_hue_deg_exact":"287/2","j":14,"k":143},{"angle_hue_deg_exact":"289/2","j":14,"k":144},{"angle_hue_deg_exact":"291/2","j":14,"k":145},{"angle_hue_deg_exact":"293/2","j":14,"k":146},{"angle_hue_deg_exact":"295/2","j":14,"k":147},{"angle_hue_deg_exact":"297/2","j":14,"k":148},{"angle_hue_deg_exact":"299/2","j":14,"k":149},{"angle_hue_deg_exact":"301/2","j":15,"k":150},{"angle_hue_deg_exact":"303/2","j":15,"k":151},{"angle_hue_deg_exact":"305/2","j":15,"k":152},{"angle_hue_deg_exact":"307/2","j":15,"k":153},{"angle_hue_deg_exact":"309/2","j":15,"k":154},{"angle_hue_deg_exact":"311/2","j":15,"k":155},{"angle_hue_deg_exact":"313/2","j":15,"k":156},{"angle_hue_deg_exact":"315/2","j":15,"k":157},{"angle_hue_deg_exact":"317/2","j":15,"k":158},{"angle_hue_deg_exact":"319/2","j":15,"k":159},{"angle_hue_deg_exact":"321/2","j":16,"k":160},{"angle_hue_deg_exact":"323/2","j":16,"k":161},{"angle_hue_deg_exact":"325/2","j":16,"k":162},{"angle_hue_deg_exact":"327/2","j":16,"k":163},{"angle_hue_deg_exact":"329/2","j":16,"k":164},{"angle_hue_deg_exact":"331/2","j":16,"k":165},{"angle_hue_deg_exact":"333/2","j":16,"k":166},{"angle_hue_deg_exact":"335/2","j":16,"k":167},{"angle_hue_deg_exact":"337/2","j":16,"k":168},{"angle_hue_deg_exact":"339/2","j":16,"k":169},{"angle_hue_deg_exact":"341/2","j":17,"k":170},{"angle_hue_deg_exact":"343/2","j":17,"k":171},{"angle_hue_deg_exact":"345/2","j":17,"k":172},{"angle_hue_deg_exact":"347/2","j":17,"k":173},{"angle_hue_deg_exact":"349/2","j":17,"k":174},{"angle_hue_deg_exact":"351/2","j":17,"k":175},{"angle_hue_deg_exact":"353/2","j":17,"k":176},{"angle_hue_deg_exact":"355/2","j":17,"k":177},{"angle_hue_deg_exact":"357/2","j":17,"k":178},{"angle_hue_deg_exact":"359/2","j":17,"k":179},{"angle_hue_deg_exact":"361/2","j":18,"k":180},{"angle_hue_deg_exact":"363/2","j":18,"k":181},{"angle_hue_deg_exact":"365/2","j":18,"k":182},{"angle_hue_deg_exact":"367/2","j":18,"k":183},{"angle_hue_deg_exact":"369/2","j":18,"k":184},{"angle_hue_deg_exact":"371/2","j":18,"k":185},{"angle_hue_deg_exact":"373/2","j":18,"k":186},{"angle_hue_deg_exact":"375/2","j":18,"k":187},{"angle_hue_deg_exact":"377/2","j":18,"k":188},{"angle_hue_deg_exact":"379/2","j":18,"k":189},{"angle_hue_deg_exact":"381/2","j":19,"k":190},{"angle_hue_deg_exact":"383/2","j":19,"k":191},{"angle_hue_deg_exact":"385/2","j":19,"k":192},{"angle_hue_deg_exact":"387/2","j":19,"k":193},{"angle_hue_deg_exact":"389/2","j":19,"k":194},{"angle_hue_deg_exact":"391/2","j":19,"k":195},{"angle_hue_deg_exact":"393/2","j":19,"k":196},{"angle_hue_deg_exact":"395/2","j":19,"k":197},{"angle_hue_deg_exact":"397/2","j":19,"k":198},{"angle_hue_deg_exact":"399/2","j":19,"k":199},{"angle_hue_deg_exact":"401/2","j":20,"k":200},{"angle_hue_deg_exact":"403/2","j":20,"k":201},{"angle_hue_deg_exact":"405/2","j":20,"k":202},{"angle_hue_deg_exact":"407/2","j":20,"k":203},{"angle_hue_deg_exact":"409/2","j":20,"k":204},{"angle_hue_deg_exact":"411/2","j":20,"k":205},{"angle_hue_deg_exact":"413/2","j":20,"k":206},{"angle_hue_deg_exact":"415/2","j":20,"k":207},{"angle_hue_deg_exact":"417/2","j":20,"k":208},{"angle_hue_deg_exact":"419/2","j":20,"k":209},{"angle_hue_deg_exact":"421/2","j":21,"k":210},{"angle_hue_deg_exact":"423/2","j":21,"k":211},{"angle_hue_deg_exact":"425/2","j":21,"k":212},{"angle_hue_deg_exact":"427/2","j":21,"k":213},{"angle_hue_deg_exact":"429/2","j":21,"k":214},{"angle_hue_deg_exact":"431/2","j":21,"k":215},{"angle_hue_deg_exact":"433/2","j":21,"k":216},{"angle_hue_deg_exact":"435/2","j":21,"k":217},{"angle_hue_deg_exact":"437/2","j":21,"k":218},{"angle_hue_deg_exact":"439/2","j":21,"k":219},{"angle_hue_deg_exact":"441/2","j":22,"k":220},{"angle_hue_deg_exact":"443/2","j":22,"k":221},{"angle_hue_deg_exact":"445/2","j":22,"k":222},{"angle_hue_deg_exact":"447/2","j":22,"k":223},{"angle_hue_deg_exact":"449/2","j":22,"k":224},{"angle_hue_deg_exact":"451/2","j":22,"k":225},{"angle_hue_deg_exact":"453/2","j":22,"k":226},{"angle_hue_deg_exact":"455/2","j":22,"k":227},{"angle_hue_deg_exact":"457/2","j":22,"k":228},{"angle_hue_deg_exact":"459/2","j":22,"k":229},{"angle_hue_deg_exact":"461/2","j":23,"k":230},{"angle_hue_deg_exact":"463/2","j":23,"k":231},{"angle_hue_deg_exact":"465/2","j":23,"k":232},{"angle_hue_deg_exact":"467/2","j":23,"k":233},{"angle_hue_deg_exact":"469/2","j":23,"k":234},{"angle_hue_deg_exact":"471/2","j":23,"k":235},{"angle_hue_deg_exact":"473/2","j":23,"k":236},{"angle_hue_deg_exact":"475/2","j":23,"k":237},{"angle_hue_deg_exact":"477/2","j":23,"k":238},{"angle_hue_deg_exact":"479/2","j":23,"k":239},{"angle_hue_deg_exact":"481/2","j":24,"k":240},{"angle_hue_deg_exact":"483/2","j":24,"k":241},{"angle_hue_deg_exact":"485/2","j":24,"k":242},{"angle_hue_deg_exact":"487/2","j":24,"k":243},{"angle_hue_deg_exact":"489/2","j":24,"k":244},{"angle_hue_deg_exact":"491/2","j":24,"k":245},{"angle_hue_deg_exact":"493/2","j":24,"k":246},{"angle_hue_deg_exact":"495/2","j":24,"k":247},{"angle_hue_deg_exact":"497/2","j":24,"k":248},{"angle_hue_deg_exact":"499/2","j":24,"k":249},{"angle_hue_deg_exact":"501/2","j":25,"k":250},{"angle_hue_deg_exact":"503/2","j":25,"k":251},{"angle_hue_deg_exact":"505/2","j":25,"k":252},{"angle_hue_deg_exact":"507/2","j":25,"k":253},{"angle_hue_deg_exact":"509/2","j":25,"k":254},{"angle_hue_deg_exact":"511/2","j":25,"k":255},{"angle_hue_deg_exact":"513/2","j":25,"k":256},{"angle_hue_deg_exact":"515/2","j":25,"k":257},{"angle_hue_deg_exact":"517/2","j":25,"k":258},{"angle_hue_deg_exact":"519/2","j":25,"k":259},{"angle_hue_deg_exact":"521/2","j":26,"k":260},{"angle_hue_deg_exact":"523/2","j":26,"k":261},{"angle_hue_deg_exact":"525/2","j":26,"k":262},{"angle_hue_deg_exact":"527/2","j":26,"k":263},{"angle_hue_deg_exact":"529/2","j":26,"k":264},{"angle_hue_deg_exact":"531/2","j":26,"k":265},{"angle_hue_deg_exact":"533/2","j":26,"k":266},{"angle_hue_deg_exact":"535/2","j":26,"k":267},{"angle_hue_deg_exact":"537/2","j":26,"k":268},{"angle_hue_deg_exact":"539/2","j":26,"k":269},{"angle_hue_deg_exact":"541/2","j":27,"k":270},{"angle_hue_deg_exact":"543/2","j":27,"k":271},{"angle_hue_deg_exact":"545/2","j":27,"k":272},{"angle_hue_deg_exact":"547/2","j":27,"k":273},{"angle_hue_deg_exact":"549/2","j":27,"k":274},{"angle_hue_deg_exact":"551/2","j":27,"k":275},{"angle_hue_deg_exact":"553/2","j":27,"k":276},{"angle_hue_deg_exact":"555/2","j":27,"k":277},{"angle_hue_deg_exact":"557/2","j":27,"k":278},{"angle_hue_deg_exact":"559/2","j":27,"k":279},{"angle_hue_deg_exact":"561/2","j":28,"k":280},{"angle_hue_deg_exact":"563/2","j":28,"k":281},{"angle_hue_deg_exact":"565/2","j":28,"k":282},{"angle_hue_deg_exact":"567/2","j":28,"k":283},{"angle_hue_deg_exact":"569/2","j":28,"k":284},{"angle_hue_deg_exact":"571/2","j":28,"k":285},{"angle_hue_deg_exact":"573/2","j":28,"k":286},{"angle_hue_deg_exact":"575/2","j":28,"k":287},{"angle_hue_deg_exact":"577/2","j":28,"k":288},{"angle_hue_deg_exact":"579/2","j":28,"k":289},{"angle_hue_deg_exact":"581/2","j":29,"k":290},{"angle_hue_deg_exact":"583/2","j":29,"k":291},{"angle_hue_deg_exact":"585/2","j":29,"k":292},{"angle_hue_deg_exact":"587/2","j":29,"k":293},{"angle_hue_deg_exact":"589/2","j":29,"k":294},{"angle_hue_deg_exact":"591/2","j":29,"k":295},{"angle_hue_deg_exact":"593/2","j":29,"k":296},{"angle_hue_deg_exact":"595/2","j":29,"k":297},{"angle_hue_deg_exact":"597/2","j":29,"k":298},{"angle_hue_deg_exact":"599/2","j":29,"k":299},{"angle_hue_deg_exact":"601/2","j":30,"k":300},{"angle_hue_deg_exact":"603/2","j":30,"k":301},{"angle_hue_deg_exact":"605/2","j":30,"k":302},{"angle_hue_deg_exact":"607/2","j":30,"k":303},{"angle_hue_deg_exact":"609/2","j":30,"k":304},{"angle_hue_deg_exact":"611/2","j":30,"k":305},{"angle_hue_deg_exact":"613/2","j":30,"k":306},{"angle_hue_deg_exact":"615/2","j":30,"k":307},{"angle_hue_deg_exact":"617/2","j":30,"k":308},{"angle_hue_deg_exact":"619/2","j":30,"k":309},{"angle_hue_deg_exact":"621/2","j":31,"k":310},{"angle_hue_deg_exact":"623/2","j":31,"k":311},{"angle_hue_deg_exact":"625/2","j":31,"k":312},{"angle_hue_deg_exact":"627/2","j":31,"k":313},{"angle_hue_deg_exact":"629/2","j":31,"k":314},{"angle_hue_deg_exact":"631/2","j":31,"k":315},{"angle_hue_deg_exact":"633/2","j":31,"k":316},{"angle_hue_deg_exact":"635/2","j":31,"k":317},{"angle_hue_deg_exact":"637/2","j":31,"k":318},{"angle_hue_deg_exact":"639/2","j":31,"k":319},{"angle_hue_deg_exact":"641/2","j":32,"k":320},{"angle_hue_deg_exact":"643/2","j":32,"k":321},{"angle_hue_deg_exact":"645/2","j":32,"k":322},{"angle_hue_deg_exact":"647/2","j":32,"k":323},{"angle_hue_deg_exact":"649/2","j":32,"k":324},{"angle_hue_deg_exact":"651/2","j":32,"k":325},{"angle_hue_deg_exact":"653/2","j":32,"k":326},{"angle_hue_deg_exact":"655/2","j":32,"k":327},{"angle_hue_deg_exact":"657/2","j":32,"k":328},{"angle_hue_deg_exact":"659/2","j":32,"k":329},{"angle_hue_deg_exact":"661/2","j":33,"k":330},{"angle_hue_deg_exact":"663/2","j":33,"k":331},{"angle_hue_deg_exact":"665/2","j":33,"k":332},{"angle_hue_deg_exact":"667/2","j":33,"k":333},{"angle_hue_deg_exact":"669/2","j":33,"k":334},{"angle_hue_deg_exact":"671/2","j":33,"k":335},{"angle_hue_deg_exact":"673/2","j":33,"k":336},{"angle_hue_deg_exact":"675/2","j":33,"k":337},{"angle_hue_deg_exact":"677/2","j":33,"k":338},{"angle_hue_deg_exact":"679/2","j":33,"k":339},{"angle_hue_deg_exact":"681/2","j":34,"k":340},{"angle_hue_deg_exact":"683/2","j":34,"k":341},{"angle_hue_deg_exact":"685/2","j":34,"k":342},{"angle_hue_deg_exact":"687/2","j":34,"k":343},{"angle_hue_deg_exact":"689/2","j":34,"k":344},{"angle_hue_deg_exact":"691/2","j":34,"k":345},{"angle_hue_deg_exact":"693/2","j":34,"k":346},{"angle_hue_deg_exact":"695/2","j":34,"k":347},{"angle_hue_deg_exact":"697/2","j":34,"k":348},{"angle_hue_deg_exact":"699/2","j":34,"k":349},{"angle_hue_deg_exact":"701/2","j":35,"k":350},{"angle_hue_deg_exact":"703/2","j":35,"k":351},{"angle_hue_deg_exact":"705/2","j":35,"k":352},{"angle_hue_deg_exact":"707/2","j":35,"k":353},{"angle_hue_deg_exact":"709/2","j":35,"k":354},{"angle_hue_deg_exact":"711/2","j":35,"k":355},{"angle_hue_deg_exact":"713/2","j":35,"k":356},{"angle_hue_deg_exact":"715/2","j":35,"k":357},{"angle_hue_deg_exact":"717/2","j":35,"k":358},{"angle_hue_deg_exact":"719/2","j":35,"k":359}],"decans":[{"angle_hue_deg_exact":"5","decan":0,"end_degree":10,"fludd":{"alphabetic_letter":"A","engraved_letter":"a","qualification":"lowercase a; modern pitch content not assumed","register":"upper"},"gaffurio":{"engraved_label":"PHRYGIVS","mode":"Phrygian"},"j":0,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":1,"pitch_hue_deg_exact":"30","planet":"Mars","planet_glyph":"♂","s":0,"sign":"Aries","start_degree":0,"triplicity_sign":0},{"angle_hue_deg_exact":"15","decan":1,"end_degree":20,"fludd":{"alphabetic_letter":"G","engraved_letter":"G","qualification":"sun glyph at G","register":"central"},"gaffurio":{"engraved_label":"DORIVS","mode":"Dorian"},"j":1,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":10,"pitch_hue_deg_exact":"300","planet":"Sun","planet_glyph":"☉","s":0,"sign":"Aries","start_degree":10,"triplicity_sign":4},{"angle_hue_deg_exact":"25","decan":2,"end_degree":30,"fludd":{"alphabetic_letter":"F","engraved_letter":"F","qualification":"F accidental not stated at label; F-sharp argument in modern secondary","register":"lower"},"gaffurio":{"engraved_label":"HYPOLYDIVS","mode":"Hypolydian"},"j":2,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":5,"pitch_hue_deg_exact":"150","planet":"Venus","planet_glyph":"♀","s":0,"sign":"Aries","start_degree":20,"triplicity_sign":8},{"angle_hue_deg_exact":"35","decan":0,"end_degree":40,"fludd":{"alphabetic_letter":"E","engraved_letter":"E","qualification":"mercury glyph aligned with E","register":"lower"},"gaffurio":{"engraved_label":"HYPOPHRIGIVS","mode":"Hypophrygian"},"j":3,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":3,"pitch_hue_deg_exact":"90","planet":"Mercury","planet_glyph":"☿","s":1,"sign":"Taurus","start_degree":30,"triplicity_sign":1},{"angle_hue_deg_exact":"45","decan":1,"end_degree":50,"fludd":{"alphabetic_letter":"D","engraved_letter":"D","qualification":"moon glyph aligned with D","register":"lower"},"gaffurio":{"engraved_label":"HYPODORIVS","mode":"Hypodorian"},"j":4,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":0,"pitch_hue_deg_exact":"0","planet":"Moon","planet_glyph":"☽","s":1,"sign":"Taurus","start_degree":40,"triplicity_sign":5},{"angle_hue_deg_exact":"55","decan":2,"end_degree":60,"fludd":{"alphabetic_letter":"C","engraved_letter":"c","qualification":"lowercase c","register":"upper"},"gaffurio":{"engraved_label":"MIXOLYDIVS","mode":"Mixolydian"},"j":5,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":7,"pitch_hue_deg_exact":"210","planet":"Saturn","planet_glyph":"♄","s":1,"sign":"Taurus","start_degree":50,"triplicity_sign":9},{"angle_hue_deg_exact":"65","decan":0,"end_degree":70,"fludd":{"alphabetic_letter":"B","engraved_letter":"b","qualification":"lowercase b; modern pitch content not assumed","register":"upper"},"gaffurio":{"engraved_label":"LYDIVS","mode":"Lydian"},"j":6,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":6,"pitch_hue_deg_exact":"180","planet":"Jupiter","planet_glyph":"♃","s":2,"sign":"Gemini","start_degree":60,"triplicity_sign":2},{"angle_hue_deg_exact":"75","decan":1,"end_degree":80,"fludd":{"alphabetic_letter":"A","engraved_letter":"a","qualification":"lowercase a; modern pitch content not assumed","register":"upper"},"gaffurio":{"engraved_label":"PHRYGIVS","mode":"Phrygian"},"j":7,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":2,"pitch_hue_deg_exact":"60","planet":"Mars","planet_glyph":"♂","s":2,"sign":"Gemini","start_degree":70,"triplicity_sign":6},{"angle_hue_deg_exact":"85","decan":2,"end_degree":90,"fludd":{"alphabetic_letter":"G","engraved_letter":"G","qualification":"sun glyph at G","register":"central"},"gaffurio":{"engraved_label":"DORIVS","mode":"Dorian"},"j":8,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":9,"pitch_hue_deg_exact":"270","planet":"Sun","planet_glyph":"☉","s":2,"sign":"Gemini","start_degree":80,"triplicity_sign":10},{"angle_hue_deg_exact":"95","decan":0,"end_degree":100,"fludd":{"alphabetic_letter":"F","engraved_letter":"F","qualification":"F accidental not stated at label; F-sharp argument in modern secondary","register":"lower"},"gaffurio":{"engraved_label":"HYPOLYDIVS","mode":"Hypolydian"},"j":9,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":8,"pitch_hue_deg_exact":"240","planet":"Venus","planet_glyph":"♀","s":3,"sign":"Cancer","start_degree":90,"triplicity_sign":3},{"angle_hue_deg_exact":"105","decan":1,"end_degree":110,"fludd":{"alphabetic_letter":"E","engraved_letter":"E","qualification":"mercury glyph aligned with E","register":"lower"},"gaffurio":{"engraved_label":"HYPOPHRIGIVS","mode":"Hypophrygian"},"j":10,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":4,"pitch_hue_deg_exact":"120","planet":"Mercury","planet_glyph":"☿","s":3,"sign":"Cancer","start_degree":100,"triplicity_sign":7},{"angle_hue_deg_exact":"115","decan":2,"end_degree":120,"fludd":{"alphabetic_letter":"D","engraved_letter":"D","qualification":"moon glyph aligned with D","register":"lower"},"gaffurio":{"engraved_label":"HYPODORIVS","mode":"Hypodorian"},"j":11,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":11,"pitch_hue_deg_exact":"330","planet":"Moon","planet_glyph":"☽","s":3,"sign":"Cancer","start_degree":110,"triplicity_sign":11},{"angle_hue_deg_exact":"125","decan":0,"end_degree":130,"fludd":{"alphabetic_letter":"C","engraved_letter":"c","qualification":"lowercase c","register":"upper"},"gaffurio":{"engraved_label":"MIXOLYDIVS","mode":"Mixolydian"},"j":12,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":10,"pitch_hue_deg_exact":"300","planet":"Saturn","planet_glyph":"♄","s":4,"sign":"Leo","start_degree":120,"triplicity_sign":4},{"angle_hue_deg_exact":"135","decan":1,"end_degree":140,"fludd":{"alphabetic_letter":"B","engraved_letter":"b","qualification":"lowercase b; modern pitch content not assumed","register":"upper"},"gaffurio":{"engraved_label":"LYDIVS","mode":"Lydian"},"j":13,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":5,"pitch_hue_deg_exact":"150","planet":"Jupiter","planet_glyph":"♃","s":4,"sign":"Leo","start_degree":130,"triplicity_sign":8},{"angle_hue_deg_exact":"145","decan":2,"end_degree":150,"fludd":{"alphabetic_letter":"A","engraved_letter":"a","qualification":"lowercase a; modern pitch content not assumed","register":"upper"},"gaffurio":{"engraved_label":"PHRYGIVS","mode":"Phrygian"},"j":14,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":1,"pitch_hue_deg_exact":"30","planet":"Mars","planet_glyph":"♂","s":4,"sign":"Leo","start_degree":140,"triplicity_sign":0},{"angle_hue_deg_exact":"155","decan":0,"end_degree":160,"fludd":{"alphabetic_letter":"G","engraved_letter":"G","qualification":"sun glyph at G","register":"central"},"gaffurio":{"engraved_label":"DORIVS","mode":"Dorian"},"j":15,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":0,"pitch_hue_deg_exact":"0","planet":"Sun","planet_glyph":"☉","s":5,"sign":"Virgo","start_degree":150,"triplicity_sign":5},{"angle_hue_deg_exact":"165","decan":1,"end_degree":170,"fludd":{"alphabetic_letter":"F","engraved_letter":"F","qualification":"F accidental not stated at label; F-sharp argument in modern secondary","register":"lower"},"gaffurio":{"engraved_label":"HYPOLYDIVS","mode":"Hypolydian"},"j":16,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":7,"pitch_hue_deg_exact":"210","planet":"Venus","planet_glyph":"♀","s":5,"sign":"Virgo","start_degree":160,"triplicity_sign":9},{"angle_hue_deg_exact":"175","decan":2,"end_degree":180,"fludd":{"alphabetic_letter":"E","engraved_letter":"E","qualification":"mercury glyph aligned with E","register":"lower"},"gaffurio":{"engraved_label":"HYPOPHRIGIVS","mode":"Hypophrygian"},"j":17,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":3,"pitch_hue_deg_exact":"90","planet":"Mercury","planet_glyph":"☿","s":5,"sign":"Virgo","start_degree":170,"triplicity_sign":1},{"angle_hue_deg_exact":"185","decan":0,"end_degree":190,"fludd":{"alphabetic_letter":"D","engraved_letter":"D","qualification":"moon glyph aligned with D","register":"lower"},"gaffurio":{"engraved_label":"HYPODORIVS","mode":"Hypodorian"},"j":18,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":2,"pitch_hue_deg_exact":"60","planet":"Moon","planet_glyph":"☽","s":6,"sign":"Libra","start_degree":180,"triplicity_sign":6},{"angle_hue_deg_exact":"195","decan":1,"end_degree":200,"fludd":{"alphabetic_letter":"C","engraved_letter":"c","qualification":"lowercase c","register":"upper"},"gaffurio":{"engraved_label":"MIXOLYDIVS","mode":"Mixolydian"},"j":19,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":9,"pitch_hue_deg_exact":"270","planet":"Saturn","planet_glyph":"♄","s":6,"sign":"Libra","start_degree":190,"triplicity_sign":10},{"angle_hue_deg_exact":"205","decan":2,"end_degree":210,"fludd":{"alphabetic_letter":"B","engraved_letter":"b","qualification":"lowercase b; modern pitch content not assumed","register":"upper"},"gaffurio":{"engraved_label":"LYDIVS","mode":"Lydian"},"j":20,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":6,"pitch_hue_deg_exact":"180","planet":"Jupiter","planet_glyph":"♃","s":6,"sign":"Libra","start_degree":200,"triplicity_sign":2},{"angle_hue_deg_exact":"215","decan":0,"end_degree":220,"fludd":{"alphabetic_letter":"A","engraved_letter":"a","qualification":"lowercase a; modern pitch content not assumed","register":"upper"},"gaffurio":{"engraved_label":"PHRYGIVS","mode":"Phrygian"},"j":21,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":4,"pitch_hue_deg_exact":"120","planet":"Mars","planet_glyph":"♂","s":7,"sign":"Scorpio","start_degree":210,"triplicity_sign":7},{"angle_hue_deg_exact":"225","decan":1,"end_degree":230,"fludd":{"alphabetic_letter":"G","engraved_letter":"G","qualification":"sun glyph at G","register":"central"},"gaffurio":{"engraved_label":"DORIVS","mode":"Dorian"},"j":22,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":11,"pitch_hue_deg_exact":"330","planet":"Sun","planet_glyph":"☉","s":7,"sign":"Scorpio","start_degree":220,"triplicity_sign":11},{"angle_hue_deg_exact":"235","decan":2,"end_degree":240,"fludd":{"alphabetic_letter":"F","engraved_letter":"F","qualification":"F accidental not stated at label; F-sharp argument in modern secondary","register":"lower"},"gaffurio":{"engraved_label":"HYPOLYDIVS","mode":"Hypolydian"},"j":23,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":8,"pitch_hue_deg_exact":"240","planet":"Venus","planet_glyph":"♀","s":7,"sign":"Scorpio","start_degree":230,"triplicity_sign":3},{"angle_hue_deg_exact":"245","decan":0,"end_degree":250,"fludd":{"alphabetic_letter":"E","engraved_letter":"E","qualification":"mercury glyph aligned with E","register":"lower"},"gaffurio":{"engraved_label":"HYPOPHRIGIVS","mode":"Hypophrygian"},"j":24,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":5,"pitch_hue_deg_exact":"150","planet":"Mercury","planet_glyph":"☿","s":8,"sign":"Sagittarius","start_degree":240,"triplicity_sign":8},{"angle_hue_deg_exact":"255","decan":1,"end_degree":260,"fludd":{"alphabetic_letter":"D","engraved_letter":"D","qualification":"moon glyph aligned with D","register":"lower"},"gaffurio":{"engraved_label":"HYPODORIVS","mode":"Hypodorian"},"j":25,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":1,"pitch_hue_deg_exact":"30","planet":"Moon","planet_glyph":"☽","s":8,"sign":"Sagittarius","start_degree":250,"triplicity_sign":0},{"angle_hue_deg_exact":"265","decan":2,"end_degree":270,"fludd":{"alphabetic_letter":"C","engraved_letter":"c","qualification":"lowercase c","register":"upper"},"gaffurio":{"engraved_label":"MIXOLYDIVS","mode":"Mixolydian"},"j":26,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":10,"pitch_hue_deg_exact":"300","planet":"Saturn","planet_glyph":"♄","s":8,"sign":"Sagittarius","start_degree":260,"triplicity_sign":4},{"angle_hue_deg_exact":"275","decan":0,"end_degree":280,"fludd":{"alphabetic_letter":"B","engraved_letter":"b","qualification":"lowercase b; modern pitch content not assumed","register":"upper"},"gaffurio":{"engraved_label":"LYDIVS","mode":"Lydian"},"j":27,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":7,"pitch_hue_deg_exact":"210","planet":"Jupiter","planet_glyph":"♃","s":9,"sign":"Capricorn","start_degree":270,"triplicity_sign":9},{"angle_hue_deg_exact":"285","decan":1,"end_degree":290,"fludd":{"alphabetic_letter":"A","engraved_letter":"a","qualification":"lowercase a; modern pitch content not assumed","register":"upper"},"gaffurio":{"engraved_label":"PHRYGIVS","mode":"Phrygian"},"j":28,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":3,"pitch_hue_deg_exact":"90","planet":"Mars","planet_glyph":"♂","s":9,"sign":"Capricorn","start_degree":280,"triplicity_sign":1},{"angle_hue_deg_exact":"295","decan":2,"end_degree":300,"fludd":{"alphabetic_letter":"G","engraved_letter":"G","qualification":"sun glyph at G","register":"central"},"gaffurio":{"engraved_label":"DORIVS","mode":"Dorian"},"j":29,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":0,"pitch_hue_deg_exact":"0","planet":"Sun","planet_glyph":"☉","s":9,"sign":"Capricorn","start_degree":290,"triplicity_sign":5},{"angle_hue_deg_exact":"305","decan":0,"end_degree":310,"fludd":{"alphabetic_letter":"F","engraved_letter":"F","qualification":"F accidental not stated at label; F-sharp argument in modern secondary","register":"lower"},"gaffurio":{"engraved_label":"HYPOLYDIVS","mode":"Hypolydian"},"j":30,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":9,"pitch_hue_deg_exact":"270","planet":"Venus","planet_glyph":"♀","s":10,"sign":"Aquarius","start_degree":300,"triplicity_sign":10},{"angle_hue_deg_exact":"315","decan":1,"end_degree":320,"fludd":{"alphabetic_letter":"E","engraved_letter":"E","qualification":"mercury glyph aligned with E","register":"lower"},"gaffurio":{"engraved_label":"HYPOPHRIGIVS","mode":"Hypophrygian"},"j":31,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":6,"pitch_hue_deg_exact":"180","planet":"Mercury","planet_glyph":"☿","s":10,"sign":"Aquarius","start_degree":310,"triplicity_sign":2},{"angle_hue_deg_exact":"325","decan":2,"end_degree":330,"fludd":{"alphabetic_letter":"D","engraved_letter":"D","qualification":"moon glyph aligned with D","register":"lower"},"gaffurio":{"engraved_label":"HYPODORIVS","mode":"Hypodorian"},"j":32,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":2,"pitch_hue_deg_exact":"60","planet":"Moon","planet_glyph":"☽","s":10,"sign":"Aquarius","start_degree":320,"triplicity_sign":6},{"angle_hue_deg_exact":"335","decan":0,"end_degree":340,"fludd":{"alphabetic_letter":"C","engraved_letter":"c","qualification":"lowercase c","register":"upper"},"gaffurio":{"engraved_label":"MIXOLYDIVS","mode":"Mixolydian"},"j":33,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":11,"pitch_hue_deg_exact":"330","planet":"Saturn","planet_glyph":"♄","s":11,"sign":"Pisces","start_degree":330,"triplicity_sign":11},{"angle_hue_deg_exact":"345","decan":1,"end_degree":350,"fludd":{"alphabetic_letter":"B","engraved_letter":"b","qualification":"lowercase b; modern pitch content not assumed","register":"upper"},"gaffurio":{"engraved_label":"LYDIVS","mode":"Lydian"},"j":34,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":8,"pitch_hue_deg_exact":"240","planet":"Jupiter","planet_glyph":"♃","s":11,"sign":"Pisces","start_degree":340,"triplicity_sign":3},{"angle_hue_deg_exact":"355","decan":2,"end_degree":360,"fludd":{"alphabetic_letter":"A","engraved_letter":"a","qualification":"lowercase a; modern pitch content not assumed","register":"upper"},"gaffurio":{"engraved_label":"PHRYGIVS","mode":"Phrygian"},"j":35,"p2b_model":"chaldean_faces_36_v1","p2b_source_id":"P2B-S1","pitch_class":4,"pitch_hue_deg_exact":"120","planet":"Mars","planet_glyph":"♂","s":11,"sign":"Pisces","start_degree":350,"triplicity_sign":7}],"defaults":{"A4_hz":432,"alpha":"0","beta":"0","colour_mode":"pitch","octave":4,"render":"oklch"},"notes":["C","D♭","D","E♭","E","F","F♯","G","A♭","A","B♭","B"],"provenance":{"P2A_input_schema":"zmc-P2A-P0-v1","P3B_archive_members_used":["output/A/*.ndjson (A==B checked)","inputs/P2A_certified_P0_36_decans.json","inputs/P2B_certified_A_faces_36.ndjson","inputs/FLUDD_LITERAL_7.csv","inputs/GAFFURIO_LITERAL_7.csv"],"P3B_archive_sha256":"b36997bd82bbf033480ae64fc13adb8688af007a3284a39ad3c593b6bf48c7fc","P3B_certified_head":"9c4a1a06b98a8acf8e218e9c904b11b95e4d2f16","builder":"build_viewer.py v0.2","derived_in_build":["elemental chord root/quality (classified from certified P2A pitch classes)","chord spelling (tertian letter rule)","opposition interval","triplicity sign index (s+4d) mod 12"],"display_choices_P4":["OKLCH L=0.74 C=0.125 rendering of certified hue numbers (default)","HSL S=74% L=62% rendering (v0.1 comparison)","orientation: 0° at top, increasing clockwise"],"display_labels_entered_in_builder":["sign glyphs","element names","note spellings","planet glyphs"],"hue_profile_certified":"HSL-hue-only-v1-no-RGB"},"schema":"zmc-p4-exploratory-viewer-data-v0.2","signs":[{"chord":{"name":"B♭ minor","pcs_root_position":[10,1,5],"quality":"minor","root_pc":10,"spelled":["B♭","D♭","F"]},"element":"Fire","glyph":"♈︎","name":"Aries","opposite":{"interval_up_semitones":1,"s":6},"pitch_class":1,"pitch_name":"D♭","s":0,"triplicity_signs":[0,4,8]},{"chord":{"name":"C minor","pcs_root_position":[0,3,7],"quality":"minor","root_pc":0,"spelled":["C","E♭","G"]},"element":"Earth","glyph":"♉︎","name":"Taurus","opposite":{"interval_up_semitones":1,"s":7},"pitch_class":3,"pitch_name":"E♭","s":1,"triplicity_signs":[1,5,9]},{"chord":{"name":"D major","pcs_root_position":[2,6,9],"quality":"major","root_pc":2,"spelled":["D","F♯","A"]},"element":"Air","glyph":"♊︎","name":"Gemini","opposite":{"interval_up_semitones":11,"s":8},"pitch_class":6,"pitch_name":"F♯","s":2,"triplicity_signs":[2,6,10]},{"chord":{"name":"E major","pcs_root_position":[4,8,11],"quality":"major","root_pc":4,"spelled":["E","G♯","B"]},"element":"Water","glyph":"♋︎","name":"Cancer","opposite":{"interval_up_semitones":11,"s":9},"pitch_class":8,"pitch_name":"A♭","s":3,"triplicity_signs":[3,7,11]},{"chord":{"name":"B♭ minor","pcs_root_position":[10,1,5],"quality":"minor","root_pc":10,"spelled":["B♭","D♭","F"]},"element":"Fire","glyph":"♌︎","name":"Leo","opposite":{"interval_up_semitones":11,"s":10},"pitch_class":10,"pitch_name":"B♭","s":4,"triplicity_signs":[4,8,0]},{"chord":{"name":"C minor","pcs_root_position":[0,3,7],"quality":"minor","root_pc":0,"spelled":["C","E♭","G"]},"element":"Earth","glyph":"♍︎","name":"Virgo","opposite":{"interval_up_semitones":11,"s":11},"pitch_class":0,"pitch_name":"C","s":5,"triplicity_signs":[5,9,1]},{"chord":{"name":"D major","pcs_root_position":[2,6,9],"quality":"major","root_pc":2,"spelled":["D","F♯","A"]},"element":"Air","glyph":"♎︎","name":"Libra","opposite":{"interval_up_semitones":11,"s":0},"pitch_class":2,"pitch_name":"D","s":6,"triplicity_signs":[6,10,2]},{"chord":{"name":"E major","pcs_root_position":[4,8,11],"quality":"major","root_pc":4,"spelled":["E","G♯","B"]},"element":"Water","glyph":"♏︎","name":"Scorpio","opposite":{"interval_up_semitones":11,"s":1},"pitch_class":4,"pitch_name":"E","s":7,"triplicity_signs":[7,11,3]},{"chord":{"name":"B♭ minor","pcs_root_position":[10,1,5],"quality":"minor","root_pc":10,"spelled":["B♭","D♭","F"]},"element":"Fire","glyph":"♐︎","name":"Sagittarius","opposite":{"interval_up_semitones":1,"s":2},"pitch_class":5,"pitch_name":"F","s":8,"triplicity_signs":[8,0,4]},{"chord":{"name":"C minor","pcs_root_position":[0,3,7],"quality":"minor","root_pc":0,"spelled":["C","E♭","G"]},"element":"Earth","glyph":"♑︎","name":"Capricorn","opposite":{"interval_up_semitones":1,"s":3},"pitch_class":7,"pitch_name":"G","s":9,"triplicity_signs":[9,1,5]},{"chord":{"name":"D major","pcs_root_position":[2,6,9],"quality":"major","root_pc":2,"spelled":["D","F♯","A"]},"element":"Air","glyph":"♒︎","name":"Aquarius","opposite":{"interval_up_semitones":1,"s":4},"pitch_class":9,"pitch_name":"A","s":10,"triplicity_signs":[10,2,6]},{"chord":{"name":"E major","pcs_root_position":[4,8,11],"quality":"major","root_pc":4,"spelled":["E","G♯","B"]},"element":"Water","glyph":"♓︎","name":"Pisces","opposite":{"interval_up_semitones":1,"s":5},"pitch_class":11,"pitch_name":"B","s":11,"triplicity_signs":[11,3,7]}],"status":"EXPLORATORY_VIEWER_NOT_P4_CERTIFIED"}</script>
+<script>
+'use strict';
+(() => {
+const VIEWER_VERSION = 'zmc-p4-exploratory-v0.3.4';
+const DATA_EL = document.getElementById('certified-data');
+const DATA = JSON.parse(DATA_EL.textContent);
+if (DATA.schema !== 'zmc-p4-exploratory-viewer-data-v0.2' || DATA.decans.length !== 36 || DATA.cells.length !== 360 || DATA.signs.length !== 12)
+  throw Error('Unexpected viewer data schema/count');
+const S = DATA.signs, D = DATA.decans, C = DATA.cells, N = DATA.notes;
+const el = id => document.getElementById(id);
+const SVGNS = 'http://www.w3.org/2000/svg';
+const SYMBOL_FONT = 'DejaVu Sans, Noto Sans Symbols 2, Segoe UI Symbol, serif';
+const UI_FONT = 'Inter, system-ui, Segoe UI, Arial, sans-serif';
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Test/inspection hook: observations only, never used for rendering decisions.
+const HOOK = window.__zmc = { audioContextsCreated: 0, lastFrequencies: [], lastSource: null, renders: 0 };
+
+/* ---------------- exact rational arithmetic (BigInt) ---------------- */
+const babs = x => x < 0n ? -x : x;
+const gcd = (a, b) => { a = babs(a); b = babs(b); while (b) [a, b] = [b, a % b]; return a || 1n; };
+const R = (n, d = 1n) => { n = BigInt(n); d = BigInt(d); if (d === 0n) throw Error('zero denominator'); if (d < 0n) { n = -n; d = -d; } const g = gcd(n, d); return { n: n / g, d: d / g }; };
+const radd = (a, b) => R(a.n * b.d + b.n * a.d, a.d * b.d);
+const rmod = (a, m) => { const M = BigInt(m) * a.d; return R(((a.n % M) + M) % M, a.d); };
+const rfloor = a => a.n >= 0n ? a.n / a.d : -((-a.n + a.d - 1n) / a.d);
+const rnum = a => Number(a.n) / Number(a.d);
+function rstr(a) {
+  if (a.d === 1n) return a.n.toString();
+  let d = a.d, two = 0, five = 0;
+  while (d % 2n === 0n) { d /= 2n; two++; } while (d % 5n === 0n) { d /= 5n; five++; }
+  if (d !== 1n) return `${a.n}/${a.d}`;
+  const k = Math.max(two, five), scaled = a.n * 10n ** BigInt(k) / a.d, neg = scaled < 0n;
+  const s = babs(scaled).toString().padStart(k + 1, '0');
+  return (neg ? '-' : '') + s.slice(0, -k) + '.' + s.slice(-k);
+}
+function rparse(text) {
+  const s = String(text).trim().replace(/−/g, '-').replace(/°$/, '').trim();
+  if (!s || s.length > 40) return null;
+  let m = /^([+-]?\d+)\s*\/\s*(\d+)$/.exec(s);
+  if (m) return BigInt(m[2]) === 0n ? null : R(BigInt(m[1]), BigInt(m[2]));
+  m = /^([+-]?)(\d*)(?:\.(\d*))?$/.exec(s);
+  if (!m || (m[2] === '' && (m[3] ?? '') === '')) return null;
+  const frac = m[3] ?? '', n = BigInt((m[2] || '0') + frac) * (m[1] === '-' ? -1n : 1n);
+  return R(n, 10n ** BigInt(frac.length));
+}
+const RX = s => rparse(s);
+const fmtDeg = a => rstr(a) + '°';
+
+/* ---------------- colour rendering (P4 display choice) ---------------- */
+const OK_L = 0.74, OK_C = 0.125;
+const enc = c => { c = Math.min(1, Math.max(0, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; };
+const hex = rgb => '#' + rgb.map(c => Math.round(Math.min(1, Math.max(0, c)) * 255).toString(16).padStart(2, '0')).join('');
+function oklchHex(h) {
+  const a = OK_C * Math.cos(h * Math.PI / 180), b = OK_C * Math.sin(h * Math.PI / 180);
+  const l = (OK_L + .3963377774 * a + .2158037573 * b) ** 3, m = (OK_L - .1055613458 * a - .0638541728 * b) ** 3, s = (OK_L - .0894841775 * a - 1.2914855480 * b) ** 3;
+  return hex([4.0767416621 * l - 3.3077115913 * m + .2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - .3413193965 * s, -.0041960863 * l - .7034186147 * m + 1.7076147010 * s].map(enc));
+}
+function hslHex(h) { const s = .74, l = .62, k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l); return hex([0, 8, 4].map(n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)))); }
+const lin = c => c <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4;
+const lum = h => { const v = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(lin); return .2126 * v[0] + .7152 * v[1] + .0722 * v[2]; };
+const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + .05) / (y + .05); };
+const inkOn = bg => contrast(bg, '#0a1524') >= contrast(bg, '#ffffff') ? '#0a1524' : '#ffffff';
+
+/* ---------------- state ---------------- */
+const st = { theta: R(5), mode: 'pitch', alpha: R(0), beta: R(0), labels: 'notes', render: 'oklch',
+  ov: { same: true, tri: true, opp: true, ticks: true }, compact: false,
+  sound: false, hoverSound: true, a4: 432, octave: 4 };   // sound is never restored from a link: it needs a gesture
+const wrapped = () => rmod(st.theta, 360);
+const cellK = () => Number(rfloor(wrapped()));
+const decanJ = () => Math.floor(cellK() / 10);
+const paint = h => (st.render === 'oklch' ? oklchHex : hslHex)(h);
+const pitchHue = d => rmod(radd(RX(d.pitch_hue_deg_exact), st.beta), 360);
+const midHue = d => rmod(radd(RX(d.angle_hue_deg_exact), st.alpha), 360);
+const cellHue = k => rmod(radd(RX(C[k].angle_hue_deg_exact), st.alpha), 360);
+const thetaHue = () => rmod(radd(wrapped(), st.alpha), 360);
+const noteColour = d => paint(rnum(pitchHue(d)));
+
+/* ---------------- SVG helpers ---------------- */
+const CX = 330, CY = 330;
+const polar = (r, deg) => ({ x: CX + r * Math.sin(deg * Math.PI / 180), y: CY - r * Math.cos(deg * Math.PI / 180) });
+const f3 = v => v.toFixed(3);
+function sector(r0, r1, a, b) {
+  const large = b - a > 180 ? 1 : 0, p1 = polar(r1, a), p2 = polar(r1, b), p3 = polar(r0, b), p4 = polar(r0, a);
+  return `M${f3(p1.x)},${f3(p1.y)} A${r1},${r1} 0 ${large},1 ${f3(p2.x)},${f3(p2.y)} L${f3(p3.x)},${f3(p3.y)} A${r0},${r0} 0 ${large},0 ${f3(p4.x)},${f3(p4.y)} Z`;
+}
+function node(tag, attrs = {}, parent) { const e = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v)); if (parent) parent.append(e); return e; }
+function text(parent, x, y, value, size, fill, weight = '500', extra = {}) {
+  const t = node('text', { x: f3(x), y: f3(y), 'font-size': size, fill, 'font-weight': weight, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-family': UI_FONT, 'pointer-events': 'none', ...extra }, parent);
+  t.textContent = value; return t;
+}
+function geometry() {
+  if (st.mode === 'both') return { pitch: [189, 238], angle: [242, 264], labelR: 214 };
+  if (st.mode === 'angle') return { angle: [189, 264], labelR: 226 };
+  return { pitch: [189, 264], labelR: 226 };
+}
+// P4-T1 A07: triplicity vertex = each source sign's first-decan keynote at 30*sign+5°,
+// not that sign's midpoint (30*sign+15°). r=190 meets the inner edge of the
+// actual note sector [189,264] in pitch mode and [189,238] in dual-ring mode.
+// Chip placement shares this same polar bearing, at its existing r=138.
+const vertexPoint = (sign, r = 190) => polar(r, 30 * sign + 5);
+
+/* ---------------- wheel rendering ---------------- */
+const svg = el('wheel');
+let gBase, gOverlay, gHover, gSound, gCentre;
+function renderBase() {
+  HOOK.renders++;
+  svg.replaceChildren();
+  const defs = node('defs', {}, svg), grad = node('radialGradient', { id: 'coreGrad', cx: '35%', cy: '20%', r: '90%' }, defs);
+  node('stop', { offset: '0%', 'stop-color': '#2a4357' }, grad); node('stop', { offset: '100%', 'stop-color': '#101b2c' }, grad);
+  const mk = node('marker', { id: 'arrow', viewBox: '0 0 10 10', refX: 6, refY: 5, markerWidth: 6, markerHeight: 6, orient: 'auto-start-reverse' }, defs);
+  node('path', { d: 'M0,0 L10,5 L0,10 z', fill: '#b9c8d3' }, mk);
+  gBase = node('g', { id: 'base' }, svg);
+  node('circle', { cx: CX, cy: CY, r: 313, fill: '#0b1828', stroke: '#718295', 'stroke-width': .8 }, gBase);
+  const G = geometry();
+  if (G.angle) for (let k = 0; k < 360; k++) node('path', { d: sector(G.angle[0], G.angle[1], k, k + 1.01), fill: paint(rnum(cellHue(k))), 'data-k': k }, gBase);
+  if (G.pitch) D.forEach((d, j) => node('path', { d: sector(G.pitch[0], G.pitch[1], 10 * j, 10 * j + 10.005), fill: noteColour(d), stroke: '#101c2c', 'stroke-width': .4, 'data-j': j }, gBase));
+  if (st.mode === 'both') node('circle', { cx: CX, cy: CY, r: 240, fill: 'none', stroke: '#0b1828', 'stroke-width': 3.2 }, gBase);
+  for (let j = 0; j < 36; j++) { const a = polar(188, 10 * j), b = polar(265, 10 * j); node('line', { x1: f3(a.x), y1: f3(a.y), x2: f3(b.x), y2: f3(b.y), stroke: '#0e1a2a', 'stroke-width': j % 3 ? 1 : 2 }, gBase); }
+  if (st.labels !== 'none') {
+    const big = st.compact ? 1.4 : 1;
+    D.forEach((d, j) => {
+      const bg = G.pitch ? noteColour(d) : paint(rnum(midHue(d)));
+      const label = st.labels === 'notes' ? N[d.pitch_class] : st.labels === 'planets' ? d.planet_glyph : String(d.decan + 1);
+      const size = (st.labels === 'planets' ? 17 : st.labels === 'notes' ? 11.5 : 12.5) * big;
+      const p = polar(G.labelR, 10 * j + 5);
+      text(gBase, p.x, p.y, label, size, inkOn(bg), '800', { 'data-label-j': j, 'data-bg': bg, ...(st.labels === 'planets' ? { 'font-family': SYMBOL_FONT, 'font-weight': '400' } : {}) });
+    });
+  }
+  S.forEach((s, i) => {
+    node('path', { d: sector(272, 309, 30 * i, 30 * i + 30), fill: '#1e2b3c', stroke: '#66788c', 'stroke-width': .9 }, gBase);
+    const p = polar(290.5, 30 * i + 15); text(gBase, p.x, p.y, s.glyph, 27, '#e0c999', '400', { 'font-family': SYMBOL_FONT });
+  });
+  if (st.ov.ticks) for (let k = 0; k < 360; k++) {
+    if (st.compact && k % 10) continue;
+    const r1 = k % 30 === 0 ? 327 : k % 10 === 0 ? 321 : 317, p1 = polar(312, k), p2 = polar(r1, k);
+    node('line', { x1: f3(p1.x), y1: f3(p1.y), x2: f3(p2.x), y2: f3(p2.y), stroke: k % 30 === 0 ? '#ecdbb8' : k % 10 === 0 ? '#8c9baf' : '#58697c', 'stroke-width': k % 30 === 0 ? 1.7 : .65 }, gBase);
+  }
+  for (const a of [0, 90, 180, 270]) { const p = polar(342, a); text(gBase, p.x, p.y, a + '°', st.compact ? 15 : 11, '#b9c8d3', '600'); }
+  node('path', { d: `M${f3(polar(342, 7).x)},${f3(polar(342, 7).y)} A342,342 0 0,1 ${f3(polar(342, 15).x)},${f3(polar(342, 15).y)}`, fill: 'none', stroke: '#b9c8d3', 'stroke-width': 1.3, 'marker-end': 'url(#arrow)' }, gBase);
+  node('circle', { cx: CX, cy: CY, r: 180, fill: 'url(#coreGrad)', stroke: '#e4c58b', 'stroke-width': 1.4 }, gBase);
+  node('circle', { cx: CX, cy: CY, r: 171, fill: 'none', stroke: '#435569', 'stroke-dasharray': '1.3 7', 'stroke-width': 2 }, gBase);
+  gOverlay = node('g', { id: 'overlay', 'pointer-events': 'none' }, svg);
+  gHover = node('g', { id: 'hover', 'pointer-events': 'none' }, svg);
+  gSound = node('g', { id: 'sounding', 'pointer-events': 'none' }, svg);
+  gCentre = node('g', { id: 'centre', 'pointer-events': 'none' }, svg);
+  el('wheelModeLabel').textContent = { pitch: 'PITCH-CLASS HUE', angle: 'ZODIAC-ANGLE HUE', both: 'INNER: PITCH · OUTER: ANGLE' }[st.mode];
+  renderOverlay(); renderHover(); renderSounding();
+}
+function renderOverlay() {
+  gOverlay.replaceChildren(); gCentre.replaceChildren();
+  const j = decanJ(), d = D[j], s = S[d.s], k = cellK(), G = geometry();
+  node('path', { d: sector(272, 309, 30 * d.s, 30 * d.s + 30), fill: '#3a4a5e', 'fill-opacity': .75, stroke: '#e4c58b', 'stroke-width': 1.4 }, gOverlay);
+  const gp = polar(290.5, 30 * d.s + 15); text(gOverlay, gp.x, gp.y, s.glyph, 27, '#ffe3a3', '400', { 'font-family': SYMBOL_FONT });
+  if (st.ov.opp) { const o = s.opposite.s; node('path', { d: sector(273.5, 307.5, 30 * o, 30 * o + 30), fill: 'none', stroke: '#94def6', 'stroke-width': 2, 'stroke-dasharray': '5 4' }, gOverlay); }
+  if (st.ov.same) D.forEach((x, i) => { if (i !== j && x.pitch_class === d.pitch_class) node('path', { d: sector(187.5, 264.5, 10 * i, 10 * i + 10), fill: 'none', stroke: '#fff4cf', 'stroke-width': 2, 'stroke-dasharray': '4 3' }, gOverlay); });
+  if (st.ov.tri) {
+    const pts = s.triplicity_signs.map(t => vertexPoint(t));
+    node('polygon', { points: pts.map(p => `${f3(p.x)},${f3(p.y)}`).join(' '), fill: '#e4c58b', 'fill-opacity': .05, stroke: '#e4c58b', 'stroke-opacity': .42, 'stroke-width': 1.2 }, gOverlay);
+    s.triplicity_signs.forEach((t, i) => { const p = pts[i]; node('circle', { cx: f3(p.x), cy: f3(p.y), r: t === d.triplicity_sign ? 5 : 3.2, fill: t === d.triplicity_sign ? '#ffe3a3' : '#b89c66' }, gOverlay); });
+  }
+  node('path', { d: sector(186.5, 265.5, 10 * j, 10 * j + 10), fill: 'none', stroke: '#fff4cf', 'stroke-width': 3.5 }, gOverlay);
+  const th = rnum(wrapped());
+  if (G.angle) node('path', { d: sector(G.angle[0], G.angle[1], k, k + 1), fill: 'none', stroke: '#ffffff', 'stroke-width': 1.6 }, gOverlay);
+  const n1 = polar(186, th), n2 = polar(266, th); node('line', { x1: f3(n1.x), y1: f3(n1.y), x2: f3(n2.x), y2: f3(n2.y), stroke: '#ffffff', 'stroke-width': 1.4, 'stroke-opacity': .9 }, gOverlay);
+  const t1 = polar(311, th), t2 = polar(323, th - 2.2), t3 = polar(323, th + 2.2);
+  node('polygon', { points: `${f3(t1.x)},${f3(t1.y)} ${f3(t2.x)},${f3(t2.y)} ${f3(t3.x)},${f3(t3.y)}`, fill: '#ffffff' }, gOverlay);
+  const cs = st.compact ? 1.45 : 1;
+  text(gCentre, CX, 252, s.glyph, 54, '#e6c78d', '400', { 'font-family': SYMBOL_FONT });
+  text(gCentre, CX, 299, s.name.toUpperCase(), 17, '#fff0d3', '700', { 'letter-spacing': '3' });
+  text(gCentre, CX, 324, `DECAN ${d.decan + 1} · [${d.start_degree}°, ${d.end_degree}°)`, 10 * cs, '#a6b9c8', '700', { 'letter-spacing': '1.6' });
+  text(gCentre, CX, 364, N[d.pitch_class], 40, '#fff8e8', '600');
+  text(gCentre, CX, 400, `${d.planet.toUpperCase()} · ${s.element.toUpperCase()}`, 11 * cs, '#c4d3db', '600', { 'letter-spacing': '1.1' });
+  text(gCentre, CX, 424, `θ = ${fmtDeg(wrapped())}`, 10.5 * cs, '#94a9b8', '600');
+}
+
+/* hover: highlight only, never changes the selection */
+let hoverJ = null;
+function renderHover() {
+  gHover.replaceChildren();
+  if (hoverJ === null) return;
+  node('path', { d: sector(186, 266, 10 * hoverJ, 10 * hoverJ + 10), fill: '#ffffff', 'fill-opacity': .1, stroke: '#ffffff', 'stroke-width': 2.2, 'stroke-dasharray': '3 2.5', 'data-hover-j': hoverJ }, gHover);
+}
+
+/* sounding: what is audible right now, drawn on the wheel */
+let sounding = null;   // {kind:'note'|'chord', sign, tones:[{j, vertex, name, role, f, on}]}
+function chip(parent, cx, cy, fill, line1, line2, scale) {
+  const w = 58 * scale, h = (line2 ? 38 : 28) * scale;
+  node('rect', { x: f3(cx - w / 2), y: f3(cy - h / 2), width: f3(w), height: f3(h), rx: 9 * scale, fill, stroke: '#ffffff', 'stroke-width': 1.6 }, parent);
+  const ink = inkOn(fill);
+  text(parent, cx, cy - (line2 ? 6 * scale : 0), line1, 15 * scale, ink, '800');
+  if (line2) text(parent, cx, cy + 10 * scale, line2, 8.5 * scale, ink, '700', { 'letter-spacing': '.6' });
+}
+function renderSounding() {
+  if (!gSound) return;
+  gSound.replaceChildren();
+  svg.dataset.sounding = sounding ? sounding.kind : '';
+  if (!sounding) return;
+  const sc = st.compact ? 1.3 : 1;
+  if (sounding.kind === 'chord') {
+    const pts = S[sounding.sign].triplicity_signs.map(t => vertexPoint(t));
+    node('polygon', { points: pts.map(p => `${f3(p.x)},${f3(p.y)}`).join(' '), fill: '#e4c58b', 'fill-opacity': .1, stroke: '#ffe3a3', 'stroke-width': 2.6, 'data-chord-triangle': 1 }, gSound);
+  }
+  for (const t of sounding.tones) {
+    if (!t.on) continue;
+    const col = noteColour(D[t.j]);
+    node('path', { d: sector(185, 267, 10 * t.j, 10 * t.j + 10), fill: 'none', stroke: col, 'stroke-width': 7, 'stroke-opacity': .55 }, gSound);
+    node('path', { d: sector(186.5, 265.5, 10 * t.j, 10 * t.j + 10), fill: 'none', stroke: '#ffffff', 'stroke-width': 3.5, class: REDUCED ? '' : 'pulse', 'data-sounding-j': t.j }, gSound);
+    const v = vertexPoint(t.vertex);
+    node('circle', { cx: f3(v.x), cy: f3(v.y), r: 7, fill: col, stroke: '#ffffff', 'stroke-width': 2 }, gSound);
+    const c = vertexPoint(t.vertex, 138);
+    const g = node('g', { 'data-chip': t.name, 'data-chip-j': t.j }, gSound);
+    chip(g, c.x, c.y, col, t.name, t.role, sc);
+  }
+}
+
+/* ---------------- details panel ---------------- */
+function hueRow(parent, label, value, drives, formula) {
+  const sw = document.createElement('span'), k = document.createElement('span'), v = document.createElement('span'), x = document.createElement('span');
+  const h = paint(rnum(value)); sw.className = 'sw'; sw.style.background = h; sw.setAttribute('aria-hidden', 'true');
+  k.className = 'k'; k.textContent = label + (drives ? ' ●' : ''); v.className = 'v'; v.textContent = fmtDeg(value); x.className = 'x'; x.textContent = `${formula} → ${h}`;
+  const items = [sw, k, v, x]; if (drives) items.forEach(e => e.classList.add('drives'));
+  parent.append(...items);
+}
+function renderDetails() {
+  const j = decanJ(), d = D[j], s = S[d.s], k = cellK(), opp = S[s.opposite.s], ts = S[d.triplicity_sign];
+  el('signGlyph').textContent = s.glyph; el('signName').textContent = s.name;
+  el('signMetadata').textContent = `${s.element} · decan ${d.decan + 1} of 3 · [${d.start_degree}°, ${d.end_degree}°)`;
+  el('signPitch').textContent = `Sign keynote ${s.pitch_name} (P0)`;
+  el('decNote').textContent = N[d.pitch_class];
+  el('triplicityRuler').textContent = `M(s,d) = P0 of ${ts.name} (${ts.pitch_name})`;
+  el('planetName').textContent = `${d.planet_glyph}︎ ${d.planet}`;
+  el('planetSource').textContent = `Chaldean faces · ${d.p2b_source_id}`;
+  el('fluddNote').textContent = d.fludd.engraved_letter;
+  el('fluddRegister').textContent = `${d.fludd.register} register · alphabetic ${d.fludd.alphabetic_letter}`;
+  el('fluddQual').textContent = d.fludd.qualification;
+  el('modeName').textContent = d.gaffurio.mode;
+  el('modeEngraved').textContent = `Engraved “${d.gaffurio.engraved_label}”`;
+  const rows = el('hueRows'); rows.replaceChildren();
+  hueRow(rows, 'Pitch hue', pitchHue(d), st.mode !== 'angle', `30·${d.pitch_class}+β`);
+  hueRow(rows, 'Angle at θ', thetaHue(), false, `θ+α`);
+  hueRow(rows, `Cell k=${k} sample`, cellHue(k), st.mode !== 'pitch', `${k}+½+α`);
+  hueRow(rows, 'Decan midpoint', midHue(d), false, `10·${j}+5+α`);
+  el('hueNote').textContent = `● drives the visible ring. Hue numbers follow P3B; the ${st.render === 'oklch' ? 'OKLCH (L 0.74, C 0.125)' : 'HSL (S 74%, L 62%)'} colours and hex values are P4 display choices.`;
+  const c = s.chord;
+  el('chordText').textContent = `${c.name} · ${s.element}`;
+  el('chordNotes').textContent = c.spelled.join('  ·  ') + '  (root position)';
+  el('chordShare').textContent = `Shared by ${s.triplicity_signs.map(t => S[t].name).join(', ')}: each decan of ${s.name} takes the keynote of one of them.`;
+  const iv = s.opposite.interval_up_semitones;
+  el('opposition').textContent = `Opposite sign ${opp.name} (${opp.pitch_name}) lies ${iv === 1 ? 'one semitone above' : iv === 11 ? 'one semitone below' : iv + ' semitones above'} ${s.name} (${s.pitch_name}).`;
+  const tabs = el('decanTabs'), strip = el('decanStrip'); tabs.replaceChildren(); strip.replaceChildren();
+  for (let q = 0; q < 3; q++) {
+    const jj = 3 * d.s + q, r = D[jj];
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = `Decan ${q + 1}`; b.setAttribute('aria-pressed', jj === j); b.addEventListener('click', () => selectDecan(jj, { sound: 'always' })); tabs.append(b);
+    const card = document.createElement('button'); card.type = 'button'; card.className = 'dcard'; card.style.setProperty('--color', paint(rnum(st.mode === 'angle' ? midHue(r) : pitchHue(r)))); card.setAttribute('aria-pressed', jj === j);
+    const sm = document.createElement('small'), no = document.createElement('strong'), pl = document.createElement('em');
+    sm.textContent = `[${r.start_degree}°, ${r.end_degree}°)`; no.textContent = N[r.pitch_class]; pl.textContent = `${r.planet} · ${r.gaffurio.mode}`;
+    card.append(sm, no, pl); card.setAttribute('aria-label', `${s.name} decan ${q + 1}: ${N[r.pitch_class]}, ${r.planet}`); card.addEventListener('click', () => selectDecan(jj, { sound: 'always' })); strip.append(card);
+  }
+  const ro = el('readout'); ro.replaceChildren();
+  const parts = [['θ ', fmtDeg(st.theta)], [' → wrapped ', fmtDeg(wrapped())], [' · cell k=', String(k)], [' · ', `${s.name} decan ${d.decan + 1}`], [' · ', N[d.pitch_class]], [' · ', d.planet]];
+  for (const [pre, val] of parts) { ro.append(pre); const b = document.createElement('b'); b.textContent = val; ro.append(b); }
+  const vt = `${s.name}, decan ${d.decan + 1}, ${d.start_degree} to ${d.end_degree} degrees, note ${N[d.pitch_class]}, face ${d.planet}`;
+  svg.setAttribute('aria-valuenow', j); svg.setAttribute('aria-valuetext', vt);
+  el('degree').setAttribute('aria-valuetext', `cell ${k} degrees, ${s.name} decan ${d.decan + 1}`);
+  announce(vt);
+}
+let liveTimer = null, lastAnnounced = '';
+function announce(msg) { clearTimeout(liveTimer); liveTimer = setTimeout(() => { if (msg !== lastAnnounced) { el('live').textContent = msg; lastAnnounced = msg; } }, 250); }
+
+/* ---------------- selection & state ---------------- */
+// opts.sound: false (silent), true (play if the decan changed), 'always' (explicit pick of a decan)
+function setTheta(r, { syncEntry = true, sound = false } = {}) {
+  const prev = decanJ();
+  st.theta = r;
+  el('degree').value = cellK();
+  if (syncEntry) { el('thetaEntry').value = rstr(r); el('thetaEntry').setAttribute('aria-invalid', 'false'); el('thetaHint').classList.remove('err'); el('thetaHint').textContent = ''; }
+  if (sounding && sounding.kind === 'chord' && S[D[decanJ()].s] !== S[sounding.sign]) silence();
+  renderOverlay(); renderDetails(); writeHash();
+  if (sound === 'always' || (sound && decanJ() !== prev)) playNote(decanJ(), 'select');
+}
+const selectDecan = (j, opts = {}) => setTheta(R(10 * (((j % 36) + 36) % 36) + 5), opts);
+function setMode(m) {
+  st.mode = m;
+  for (const [id, v] of [['modePitch', 'pitch'], ['modeAngle', 'angle'], ['modeBoth', 'both']]) el(id).setAttribute('aria-pressed', st.mode === v);
+  const ex = el('modeExplanation'); ex.replaceChildren();
+  const b = document.createElement('strong');
+  const copy = {
+    pitch: ['Musical hue: ', 'each pitch class has a fixed hue in 30° steps, so equal notes share a colour wherever they fall.'],
+    angle: ['Angular hue: ', 'each one-degree cell shows its certified sample at k + ½; the ring approximates a continuous formula with 360 cells.'],
+    both: ['Both wheels: ', 'inner band = pitch-class hue per decan, outer band = zodiac-angle hue per degree cell. Independent conventions, so they never line up.']
+  }[m];
+  b.textContent = copy[0]; ex.append(b, copy[1]);
+  renderBase(); renderDetails(); writeHash();
+}
+function readOffset(id, key) {
+  const v = rparse(el(id).value), ok = v !== null && babs(v.n) <= 100000n * v.d;
+  el(id).setAttribute('aria-invalid', !ok);
+  el('offsetHint').textContent = ok ? '' : `${id === 'alpha' ? 'α' : 'β'} must be a number or fraction between −100000 and 100000; keeping ${rstr(st[key])}.`;
+  el('offsetHint').classList.toggle('err', !ok);
+  if (!ok) return;
+  st[key] = v; renderBase(); renderDetails(); writeHash();
+}
+
+/* ---------------- URL state & export ---------------- */
+let hashLock = false;
+function stateObject() {
+  return { theta: rstr(st.theta), mode: st.mode, alpha: rstr(st.alpha), beta: rstr(st.beta), labels: st.labels, render: st.render,
+    overlays: Object.entries(st.ov).filter(([, v]) => v).map(([k]) => k), a4: st.a4, octave: st.octave, tuning_convention: tuningConvention() };
+}
+function writeHash() {
+  if (hashLock) return;
+  const o = stateObject(), q = new URLSearchParams({ t: o.theta, m: o.mode, a: o.alpha, b: o.beta, l: o.labels, r: o.render, o: o.overlays.join('.'), hz: o.a4, oct: o.octave });
+  try { history.replaceState(null, '', '#' + q.toString()); } catch (_) { /* some file:// contexts refuse; state stays in memory */ }
+}
+function readHash() {
+  const q = new URLSearchParams(location.hash.slice(1)); if (![...q.keys()].length) return false;
+  hashLock = true;
+  try {
+    const t = q.get('t') !== null ? rparse(q.get('t')) : null; if (t) st.theta = t;
+    for (const [k, key] of [['a', 'alpha'], ['b', 'beta']]) { const v = q.get(k) !== null ? rparse(q.get(k)) : null; if (v) { st[key] = v; el(key).value = rstr(v); } }
+    if (['notes', 'planets', 'numbers', 'none'].includes(q.get('l'))) { st.labels = q.get('l'); el('labels').value = st.labels; }
+    if (['oklch', 'hsl'].includes(q.get('r'))) { st.render = q.get('r'); el('render').value = st.render; }
+    if (q.get('o') !== null) { const on = new Set(q.get('o').split('.')); for (const k of Object.keys(st.ov)) st.ov[k] = on.has(k); syncOverlayBoxes(); }
+    if (['432', '440'].includes(q.get('hz'))) setSeg('a4Seg', Number(q.get('hz')));
+    if (['3', '4', '5'].includes(q.get('oct'))) setSeg('octSeg', Number(q.get('oct')));
+    setMode(['pitch', 'angle', 'both'].includes(q.get('m')) ? q.get('m') : st.mode);
+    setTheta(st.theta);
+  } finally { hashLock = false; }
+  writeHash(); return true;
+}
+function syncOverlayBoxes() { el('ovSame').checked = st.ov.same; el('ovTri').checked = st.ov.tri; el('ovOpp').checked = st.ov.opp; el('ovTicks').checked = st.ov.ticks; }
+async function copyText(t, okMsg) {
+  try { await navigator.clipboard.writeText(t); el('exportStatus').textContent = okMsg; }
+  catch (_) { el('exportStatus').textContent = 'Clipboard unavailable here; the value is selected below for manual copy.'; const ta = document.createElement('textarea'); ta.value = t; ta.rows = 4; ta.style.width = '100%'; ta.readOnly = true; el('exportStatus').append(ta); ta.select(); }
+}
+function stateJson() {
+  const j = decanJ(), d = D[j];
+  return JSON.stringify({ viewer: VIEWER_VERSION, data_schema: DATA.schema, data_sha256_expected: EXPECTED_SHA, data_sha256_runtime: runtimeSha,
+    P3B_certified_head: DATA.provenance.P3B_certified_head, state: stateObject(),
+    readout: { theta_wrapped: rstr(wrapped()), cell_k: cellK(), decan_j: j, sign: d.sign, decan: d.decan + 1, note: N[d.pitch_class], planet: d.planet,
+      fludd: d.fludd.engraved_letter, gaffurio: d.gaffurio.mode,
+      hue_pitch: rstr(pitchHue(d)), hue_angle_theta: rstr(thetaHue()), hue_cell_sample: rstr(cellHue(cellK())), hue_decan_midpoint: rstr(midHue(d)) } }, null, 2);
+}
+function downloadSvg() {
+  const clone = svg.cloneNode(true);
+  clone.querySelector('#hover')?.remove(); clone.querySelector('#sounding')?.remove();
+  clone.setAttribute('xmlns', SVGNS); clone.setAttribute('width', 1408); clone.setAttribute('height', 1408);
+  ['tabindex', 'role', 'aria-roledescription', 'aria-label', 'aria-valuemin', 'aria-valuemax', 'aria-valuenow', 'aria-valuetext', 'class', 'id', 'data-sounding'].forEach(a => clone.removeAttribute(a));
+  const bg = node('rect', { x: -22, y: -22, width: 704, height: 704, fill: '#090f1c' }); clone.insertBefore(bg, clone.firstChild);
+  const desc = node('desc'); desc.textContent = stateJson(); clone.insertBefore(desc, clone.firstChild);
+  const blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml' });
+  const a = document.createElement('a'), d = D[decanJ()]; a.href = URL.createObjectURL(blob);
+  a.download = `zmc_wheel_${d.sign.toLowerCase()}_d${d.decan + 1}_${st.mode}_${st.render}.svg`; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  el('exportStatus').textContent = `Saved ${a.download} (state and data digest embedded in <desc>).`;
+}
+
+/* ---------------- provenance & integrity ---------------- */
+const EXPECTED_SHA = document.querySelector('meta[name="zmc-data-sha256"]').content;
+let runtimeSha = null;
+// Plain SHA-256 (FIPS 180-4) for contexts without crypto.subtle. Constants generated from exact integer roots.
+const SHA_K = new Uint32Array([0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+const SHA_H0 = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+function sha256Hex(bytes) {
+  const len = bytes.length, padded = new Uint8Array(((len + 9 + 63) >> 6) << 6);
+  padded.set(bytes); padded[len] = 0x80;
+  const dv = new DataView(padded.buffer), bits = len * 8;
+  dv.setUint32(padded.length - 8, Math.floor(bits / 4294967296)); dv.setUint32(padded.length - 4, bits >>> 0);
+  const H = SHA_H0.slice(), W = new Uint32Array(64), rotr = (x, n) => (x >>> n) | (x << (32 - n));
+  for (let off = 0; off < padded.length; off += 64) {
+    for (let t = 0; t < 16; t++) W[t] = dv.getUint32(off + 4 * t);
+    for (let t = 16; t < 64; t++) {
+      const a = W[t - 15], b = W[t - 2];
+      W[t] = (W[t - 16] + (rotr(a, 7) ^ rotr(a, 18) ^ (a >>> 3)) + W[t - 7] + (rotr(b, 17) ^ rotr(b, 19) ^ (b >>> 10))) >>> 0;
+    }
+    let [a, b, c, d, e, f, g, h] = H;
+    for (let t = 0; t < 64; t++) {
+      const t1 = (h + (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) + ((e & f) ^ (~e & g)) + SHA_K[t] + W[t]) >>> 0;
+      const t2 = ((rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+      h = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+    }
+    H[0] = (H[0] + a) >>> 0; H[1] = (H[1] + b) >>> 0; H[2] = (H[2] + c) >>> 0; H[3] = (H[3] + d) >>> 0;
+    H[4] = (H[4] + e) >>> 0; H[5] = (H[5] + f) >>> 0; H[6] = (H[6] + g) >>> 0; H[7] = (H[7] + h) >>> 0;
+  }
+  return H.map(x => x.toString(16).padStart(8, '0')).join('');
+}
+function renderProvenance(status) {
+  const P = DATA.provenance, dl = el('provList'); dl.replaceChildren();
+  const add = (k, v, cls) => { const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v; if (cls) dd.className = cls; dl.append(dt, dd); };
+  add('Status', DATA.status); add('Viewer', VIEWER_VERSION); add('Data schema', DATA.schema); add('P3B HEAD', P.P3B_certified_head); add('P3B archive SHA-256', P.P3B_archive_sha256);
+  add('Certified hue profile', P.hue_profile_certified); add('Builder', P.builder);
+  add('Data SHA-256 (build)', EXPECTED_SHA);
+  add('Data SHA-256 (this page)', status.text, status.cls);
+  for (const [id, list] of [['provDerived', P.derived_in_build], ['provLabels', P.display_labels_entered_in_builder], ['provChoices', P.display_choices_P4]]) {
+    const ul = el(id); ul.replaceChildren(); for (const t of list) { const li = document.createElement('li'); li.textContent = t; ul.append(li); }
+  }
+  el('footHead').textContent = P.P3B_certified_head;
+}
+async function verifyIntegrity() {
+  renderProvenance({ text: 'computing…' });
+  try {
+    const bytes = new TextEncoder().encode(DATA_EL.textContent);
+    let method;
+    if (window.isSecureContext && window.crypto?.subtle) {
+      const buf = await crypto.subtle.digest('SHA-256', bytes);
+      runtimeSha = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join(''); method = 'Web Crypto';
+    } else { runtimeSha = sha256Hex(bytes); method = 'built-in SHA-256'; }   // non-secure previews have no crypto.subtle
+    HOOK.integrityMethod = method;
+    const ok = runtimeSha === EXPECTED_SHA;
+    renderProvenance({ text: runtimeSha + (ok ? `  ✓ matches build (${method})` : `  ✗ MISMATCH (${method})`), cls: ok ? 'ok' : 'bad' });
+    document.documentElement.dataset.integrity = ok ? 'verified' : 'mismatch';
+    if (!ok) { el('integrityBanner').textContent = 'Embedded data does not match the build digest. Do not rely on these values; rebuild from the P3B archive.'; el('integrityBanner').classList.add('show'); el('statePill').textContent = 'DATA DIGEST MISMATCH'; }
+  } catch (e) {
+    renderProvenance({ text: 'not checked: ' + e.message, cls: 'bad' }); document.documentElement.dataset.integrity = 'unchecked';
+  }
+}
+
+/* ---------------- audio (only after the user switches sound on) ---------------- */
+let audioCtx = null, voices = [], soundTimers = [];
+// P4-T1 fixed author-defined octave-4 table: audio UI layer only, no changes to certified science.
+const CIRCLE_BASE_HZ = Object.freeze([252, 270, 288, 306, 324, 342, 360, 378, 414, 432, 468, 486]);
+const tuningConvention = () => st.a4 === 432 ? '432 Hz — author-defined circle tuning' : '440 Hz — conventional 12-tone equal temperament (12-TET)';
+const freqOf = midi => st.a4 === 432
+  ? CIRCLE_BASE_HZ[((midi % 12) + 12) % 12] * Math.pow(2, Math.floor(midi / 12) - 5)
+  : 440 * Math.pow(2, (midi - 69) / 12);
+const octOf = m => Math.floor(m / 12) - 1;
+async function ensureAudio() {
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) throw Error('Web Audio is unavailable in this browser');
+  if (!audioCtx) { audioCtx = new AC(); HOOK.audioContextsCreated++; }
+  if (audioCtx.state !== 'running') await audioCtx.resume();
+}
+const audible = () => st.sound && audioCtx && audioCtx.state === 'running';
+function silence(release = .04) {
+  if (audioCtx) {
+    const now = audioCtx.currentTime;
+    for (const v of voices) { try { v.g.gain.cancelScheduledValues(now); v.g.gain.setValueAtTime(Math.max(v.g.gain.value, .0001), now); v.g.gain.exponentialRampToValueAtTime(.0001, now + release); v.o.stop(now + release + .02); } catch (_) { } }
+  }
+  voices = []; soundTimers.forEach(clearTimeout); soundTimers = [];
+  sounding = null; renderSounding();
+}
+function tone(f, t0, dur, peak) {
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(f, t0);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(peak, t0 + .025); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+  o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0 + dur + .05);
+  const v = { o, g }; o.onended = () => { voices = voices.filter(x => x !== v); }; voices.push(v);
+}
+function setStatus(msg) { el('soundStatus').textContent = msg; }
+function playNote(j, source) {
+  if (!audible() || (source === 'hover' && !st.hoverSound)) return;
+  silence(.05);
+  const d = D[j], m = 12 * (st.octave + 1) + d.pitch_class, f = freqOf(m), dur = source === 'hover' ? .75 : source === 'button' ? 1.4 : 1.0;
+  tone(f, audioCtx.currentTime + .01, dur, .12);
+  HOOK.lastFrequencies = [f]; HOOK.lastSource = source;
+  sounding = { kind: 'note', sign: d.s, tones: [{ j, vertex: d.triplicity_sign, name: N[d.pitch_class], role: `${f.toFixed(1)} Hz`, f, on: true }] };
+  renderSounding();
+  soundTimers.push(setTimeout(() => { sounding = null; renderSounding(); }, dur * 1000));
+  const msg = `${source === 'hover' ? 'Hover' : 'Note'} · ${d.sign} decan ${d.decan + 1}: ${N[d.pitch_class]}${octOf(m)} ${f.toFixed(2)} Hz · ${d.planet} · ${tuningConvention()}`;
+  setStatus(msg); if (source !== 'hover') announce(msg);
+}
+function playChord() {
+  if (!audible()) return;
+  silence(.05);
+  const d = D[decanJ()], s = S[d.s], roles = ['root', '3rd', '5th'], END = 2.7;
+  let prev = -1;
+  const tones = s.chord.pcs_root_position.map((pc, i) => {
+    let m = 12 * (st.octave + 1) + pc; while (m <= prev) m += 12; prev = m;
+    const jj = [0, 1, 2].map(q => 3 * s.s + q).find(x => D[x].pitch_class === pc);   // the decan of this sign carrying this note
+    return { j: jj, vertex: D[jj].triplicity_sign, name: s.chord.spelled[i], role: roles[i], midi: m, f: freqOf(m), on: true };
+  });
+  // All three oscillators share one captured Web Audio timestamp: a chord, not a strum.
+  const t0 = audioCtx.currentTime;
+  tones.forEach(t => tone(t.f, t0, END, .12 / tones.length));
+  HOOK.lastFrequencies = tones.map(t => t.f); HOOK.lastSource = 'chord';
+  sounding = { kind: 'chord', sign: s.s, tones };
+  renderSounding();
+  soundTimers.push(setTimeout(() => { sounding = null; renderSounding(); }, END * 1000));
+  const msg = `${s.chord.name} (root position): ` + tones.map(t => `${t.name}${octOf(t.midi)} ${t.f.toFixed(2)} Hz ← ${D[t.j].sign} d${D[t.j].decan + 1} / ${S[t.vertex].name}`).join(' · ') + ` · ${tuningConvention()}`;
+  setStatus(msg); announce(msg);
+}
+async function setSound(on) {
+  if (on) {
+    try { await ensureAudio(); } catch (e) { setStatus('Audio unavailable: ' + e.message); on = false; }
+  } else silence();
+  st.sound = on;
+  el('soundToggle').setAttribute('aria-pressed', on); el('soundToggleText').textContent = on ? 'Sound on' : 'Sound off';
+  el('soundbar').dataset.on = on;
+  ['playNote', 'playChord', 'hoverSound'].forEach(id => el(id).disabled = !on);
+  if (on) setStatus((st.hoverSound ? 'Sound on. Hover over the decans, tap them, or use the arrow keys to hear each note.' : 'Sound on. Tap a decan or use the arrow keys to hear it.') + ' · ' + tuningConvention());
+  else if (el('soundStatus').textContent.indexOf('unavailable') < 0) setStatus('Sound is off. Switch it on, then hover, tap or use the arrow keys to hear each decan.');
+}
+function setSeg(id, v) {
+  for (const b of el(id).querySelectorAll('button')) b.setAttribute('aria-pressed', Number(b.dataset.v) === v);
+  const changed = id === 'a4Seg' ? st.a4 !== v : st.octave !== v;
+  if (changed && st.sound) {
+    silence(.04);  // terminate pre-switch voices and outstanding sound timers
+    HOOK.lastFrequencies = []; HOOK.lastSource = 'tuning-or-octave-switch';
+  }
+  if (id === 'a4Seg') st.a4 = v; else st.octave = v;
+  if (changed && st.sound) setStatus('Selected · ' + tuningConvention() + ' · octave ' + st.octave);
+}
+
+/* ---------------- events ---------------- */
+function angleFromEvent(ev) {
+  const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse()), dx = p.x - CX, dy = p.y - CY;
+  return { r: Math.hypot(dx, dy), deg: ((Math.atan2(dx, -dy) * 180 / Math.PI) + 360) % 360 };
+}
+svg.addEventListener('click', ev => {
+  const { r, deg } = angleFromEvent(ev);
+  if (r >= 186 && r <= 266) { const k = Math.min(359, Math.floor(deg)); if (st.mode === 'pitch') selectDecan(Math.floor(k / 10), { sound: 'always' }); else setTheta(R(k), { sound: 'always' }); }
+  else if (r > 266 && r <= 312) selectDecan(3 * Math.floor(deg / 30), { sound: 'always' });
+  // Pointer/touch clicks should not leave a browser/OS focus halo on the wheel.
+  // Keep tabindex, role=slider and keyboard focus for intentional Tab navigation.
+  if (ev.detail > 0 && document.activeElement === svg) svg.blur();
+});
+svg.addEventListener('pointermove', ev => {
+  if (ev.pointerType === 'touch') return;          // touch: tap selects (and plays) instead
+  const { r, deg } = angleFromEvent(ev);
+  const j = r >= 186 && r <= 266 ? Math.min(35, Math.floor(deg / 10)) : null;
+  if (j === hoverJ) return;
+  hoverJ = j; renderHover();
+  if (j !== null) {
+    const d = D[j];
+    if (audible() && st.hoverSound) playNote(j, 'hover');
+    else setStatus(`Hover · ${d.sign} decan ${d.decan + 1}: ${N[d.pitch_class]} · ${d.planet}${st.sound ? '' : '  (sound off)'}`);
+  }
+});
+svg.addEventListener('pointerleave', () => { hoverJ = null; renderHover(); });
+svg.addEventListener('keydown', ev => {
+  const j = decanJ(), map = { ArrowRight: j + 1, ArrowUp: j + 1, ArrowLeft: j - 1, ArrowDown: j - 1, PageUp: 3 * (Math.floor(j / 3) + 1), PageDown: 3 * (Math.floor(j / 3) - 1), Home: 0, End: 35 };
+  if (ev.key in map) { ev.preventDefault(); selectDecan(map[ev.key], { sound: true }); }
+  else if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); playNote(j, 'select'); }
+  else if (ev.key === 'c' || ev.key === 'C') { ev.preventDefault(); playChord(); }
+});
+el('prev').addEventListener('click', () => selectDecan(decanJ() - 1, { sound: true }));
+el('next').addEventListener('click', () => selectDecan(decanJ() + 1, { sound: true }));
+el('degree').addEventListener('input', e => setTheta(R(Number(e.target.value)), { sound: true }));
+el('thetaEntry').addEventListener('change', e => {
+  const v = rparse(e.target.value), ok = v !== null && babs(v.n) <= 10n ** 12n * v.d;
+  e.target.setAttribute('aria-invalid', !ok); el('thetaHint').classList.toggle('err', !ok);
+  el('thetaHint').textContent = ok ? '' : 'Not a number. Use e.g. 37, −10, 9.999 or 999/1000 (|θ| ≤ 10¹²).';
+  if (ok) setTheta(v, { syncEntry: false, sound: true });
+});
+el('thetaEntry').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.dispatchEvent(new Event('change')); });
+el('modePitch').addEventListener('click', () => setMode('pitch'));
+el('modeAngle').addEventListener('click', () => setMode('angle'));
+el('modeBoth').addEventListener('click', () => setMode('both'));
+el('alpha').addEventListener('change', () => readOffset('alpha', 'alpha'));
+el('beta').addEventListener('change', () => readOffset('beta', 'beta'));
+for (const id of ['alpha', 'beta']) el(id).addEventListener('keydown', e => { if (e.key === 'Enter') readOffset(id, id); });
+el('labels').addEventListener('change', e => { st.labels = e.target.value; renderBase(); writeHash(); });
+el('render').addEventListener('change', e => { st.render = e.target.value; renderBase(); renderDetails(); writeHash(); });
+for (const [id, key] of [['ovSame', 'same'], ['ovTri', 'tri'], ['ovOpp', 'opp'], ['ovTicks', 'ticks']])
+  el(id).addEventListener('change', e => { st.ov[key] = e.target.checked; key === 'ticks' ? renderBase() : renderOverlay(); writeHash(); });
+el('soundToggle').addEventListener('click', () => setSound(!st.sound));
+el('hoverSound').addEventListener('change', e => { st.hoverSound = e.target.checked; });
+for (const id of ['a4Seg', 'octSeg']) el(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; setSeg(id, Number(b.dataset.v)); writeHash(); });
+el('playNote').addEventListener('click', () => playNote(decanJ(), 'button'));
+el('playChord').addEventListener('click', playChord);
+el('stopAudio').addEventListener('click', () => { silence(); setStatus('Stopped.'); });
+el('copyLink').addEventListener('click', () => copyText(location.href, 'State link copied.'));
+el('copyState').addEventListener('click', () => copyText(stateJson(), 'State JSON copied.'));
+el('downloadSvg').addEventListener('click', downloadSvg);
+document.addEventListener('keydown', ev => {
+  if (ev.key === 'Escape') { silence(); setStatus(st.sound ? 'Stopped.' : el('soundStatus').textContent); return; }
+  const a = document.activeElement; if (a && a !== document.body) return;
+  if (ev.key === 'ArrowRight') { ev.preventDefault(); selectDecan(decanJ() + 1, { sound: true }); }
+  else if (ev.key === 'ArrowLeft') { ev.preventDefault(); selectDecan(decanJ() - 1, { sound: true }); }
+});
+window.addEventListener('hashchange', () => { if (!hashLock) readHash(); });
+new ResizeObserver(() => { const c = svg.clientWidth > 0 && svg.clientWidth < 540; if (c !== st.compact) { st.compact = c; renderBase(); } }).observe(svg);
+
+/* ---------------- boot ---------------- */
+st.compact = svg.clientWidth > 0 && svg.clientWidth < 540;
+['playNote', 'playChord', 'hoverSound'].forEach(id => el(id).disabled = true);
+if (!readHash()) { setMode('pitch'); setTheta(R(5)); }
+verifyIntegrity();
+console.info('ZMC P4 exploratory viewer loaded', VIEWER_VERSION, DATA.schema, DATA.provenance.P3B_certified_head);
+})();
+</script>
+<script id="zmc-a06-layout-only">
+/* A06 — independent layout-only supplement. Scientific, colour and audio logic untouched. */
+(function () {
+  'use strict';
+  const panel = document.querySelector('.wheelbox');
+  const wheel = document.getElementById('wheel');
+  if (!panel || !wheel) return;
+  const desktop = matchMedia('(min-width:981px) and (min-height:640px)');
+  let frame = 0;
+  function fit() {
+    frame = 0;
+    if (!desktop.matches) {
+      panel.style.removeProperty('--a06-wheel-maximum');
+      panel.classList.remove('a06-page-flow');
+      return;
+    }
+    const cs = getComputedStyle(panel);
+    const horizontalPadding = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    const availableWidth = Math.max(0, panel.clientWidth - horizontalPadding);
+    // Measure the ACTUAL non-wheel occupied height, including dynamically wrapping
+    // sound controls and status text. No fixed-height guess, clipping or overflow.
+    const otherHeight = panel.scrollHeight - wheel.getBoundingClientRect().height;
+    const naturallyStatic = innerWidth >= 981 && innerWidth <= 1279;
+    const topReserve = naturallyStatic ? Math.max(14, panel.getBoundingClientRect().top) : 14;
+    const room = innerHeight - topReserve - 12 /* bottom breathing room */ - otherHeight;
+    // Aim for a measured ~15% improvement over A05, never more than
+    // the space actually available, and never by cropping panel controls.
+    const baseline = Math.min(640, Math.max(0, innerHeight - 372), availableWidth);
+    const desired = Math.max(0, Math.floor(Math.min(720, availableWidth, room, baseline * 1.15)));
+    if (desired >= 380) {
+      panel.classList.remove('a06-page-flow');
+      panel.style.setProperty('--a06-wheel-maximum', desired + 'px');
+    } else {
+      // Impossible to show all the controls plus a legible wheel in this
+      // short viewport. Release sticky positioning so PAGE scrolling reaches
+      // everything. Never scroll INSIDE the panel and never hide any button.
+      panel.classList.add('a06-page-flow');
+      panel.style.setProperty('--a06-wheel-maximum', Math.floor(Math.min(640, availableWidth)) + 'px');
+    }
+  }
+  function schedule() {
+    if (!frame) frame = requestAnimationFrame(fit);
+  }
+  addEventListener('resize', schedule, {passive:true});
+  if (window.visualViewport) visualViewport.addEventListener('resize', schedule, {passive:true});
+  const ro = new ResizeObserver(schedule);
+  ['wheelTitle', 'orientation', 'soundbar', 'soundStatus', 'thetaHint', 'readout', 'thetaEntry']
+    .map(id => document.getElementById(id)).filter(Boolean).forEach(node => ro.observe(node));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
+  schedule();
+  window.__zmcA06Layout = { fitNow: fit, version:'A06', layoutOnly:true };
+})();
+</script>
+</body>
+</html>
